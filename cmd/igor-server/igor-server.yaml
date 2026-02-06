@@ -106,6 +106,10 @@ server:
   # Default: false
   userLocalBootDC:
 
+  # probePorts (string list) - A list of port numbers the server will use when scanning a cluster node to determine
+  # if it is alive. The scan stops on the first positive response. If no list is provided, it scans only port 22.
+  # Default: 22
+  probePorts:
 
 # -- AUTHENTICATION SETTINGS -- 
 # Parameters for how users identify themselves to igor and for how long.

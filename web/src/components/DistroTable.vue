@@ -310,7 +310,6 @@
 
 <script>
 import axios from "axios";
-import $ from "jquery";
 import Vue from "vue";
 import SmartTable from "vuejs-smart-table";
 Vue.use(SmartTable);

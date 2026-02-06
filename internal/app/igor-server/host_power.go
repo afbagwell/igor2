@@ -16,15 +16,16 @@ import (
 )
 
 const (
-	PowerOff   = "off"
-	PowerOn    = "on"
-	PowerCycle = "cycle"
+	PowerOff    = "off"
+	PowerOn     = "on"
+	PowerCycle  = "cycle"
+	PowerStatus = "status"
 )
 
 // Ensures the selected power command is recognized and spelled correctly (on/off/cycle, case-insensitive).
 func checkPowerCmdSyntax(cmd string) error {
 	c := strings.TrimSpace(strings.ToLower(cmd))
-	if !(c == PowerOn || c == PowerOff || c == PowerCycle) {
+	if !(c == PowerOn || c == PowerOff || c == PowerCycle || c == PowerStatus) {
 		return fmt.Errorf("power command '%s' not recognized", c)
 	}
 	return nil
@@ -105,7 +106,7 @@ func doPowerHosts(action string, hostList []string, clog *zl.Logger) (int, error
 			return http.StatusInternalServerError, fmt.Errorf("power-off configuration missing")
 		}
 
-		if err := runAll(igor.ExternalCmds.PowerOff, hostList); err != nil {
+		if err := runAll(igor.ExternalCmds.PowerOff, hostList, 0); err != nil {
 			return http.StatusInternalServerError, err
 		}
 
@@ -132,7 +133,7 @@ func doPowerHosts(action string, hostList []string, clog *zl.Logger) (int, error
 
 		if strings.HasPrefix(igor.ExternalCmds.PowerCycle, "ipmipower") &&
 			!strings.Contains(igor.ExternalCmds.PowerCycle, "--on-if-off") {
-			// if ipmipower is being used and the cycle command doesn't include --on-if-off"
+			// if ipmipower is being used and the cycle command doesn't include "--on-if-off"
 			// then append it to the command
 			logger.Debug().Msg("adding on-if-off flag to ipmipower command")
 			oioFlag = " --on-if-off"
@@ -144,7 +145,7 @@ func doPowerHosts(action string, hostList []string, clog *zl.Logger) (int, error
 				return http.StatusInternalServerError, fmt.Errorf("power-cycle configuration missing")
 			}
 
-			if err := runAll(igor.ExternalCmds.PowerCycle+oioFlag, hostList); err != nil {
+			if err := runAll(igor.ExternalCmds.PowerCycle+oioFlag, hostList, 0); err != nil {
 				return http.StatusInternalServerError, err
 			}
 			// if power cycle command works on its own, we can return from this point
@@ -156,7 +157,7 @@ func doPowerHosts(action string, hostList []string, clog *zl.Logger) (int, error
 				return http.StatusInternalServerError, fmt.Errorf("power-off configuration missing")
 			}
 
-			if err := runAll(igor.ExternalCmds.PowerOff, hostList); err != nil {
+			if err := runAll(igor.ExternalCmds.PowerOff, hostList, 0); err != nil {
 				return http.StatusInternalServerError, err
 			}
 		}
@@ -174,7 +175,7 @@ func doPowerHosts(action string, hostList []string, clog *zl.Logger) (int, error
 			return http.StatusInternalServerError, fmt.Errorf("power-on configuration missing")
 		}
 
-		if err := runAll(igor.ExternalCmds.PowerOn, hostList); err != nil {
+		if err := runAll(igor.ExternalCmds.PowerOn, hostList, 0); err != nil {
 			return http.StatusInternalServerError, err
 		}
 
@@ -195,13 +196,13 @@ func powerOffResNodes(reservation *Reservation) error {
 }
 
 func devUpdatePowerMap(action string, hostNames []string) {
-	powerMapMU.Lock()
+	hostStatusMapMU.Lock()
 	for _, h := range hostNames {
-		powerVal := false
+		statusVal := HostStatusOff
 		if action == PowerOn {
-			powerVal = true
+			statusVal = HostStatusUp
 		}
-		powerMap[h] = &powerVal
+		hostStatusMap[h] = statusVal
 	}
-	powerMapMU.Unlock()
+	hostStatusMapMU.Unlock()
 }

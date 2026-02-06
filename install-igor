@@ -153,10 +153,10 @@ if [[ $INSTALL_ALL == true || $INSTALL_SERVER == true ]]; then
    echo -e "Installing Igor server\n"
    echo "Starting Igor server package install ..."
    if [ $DEBIAN ]; then
-      apt-get install -y nmap sqlite3
+      apt-get install -y sqlite3
    fi
    if [ $RH ]; then
-      yum install -y nmap sqlite
+      yum install -y sqlite
    fi
    echo -e "Igor server package installation finished.\n"
 

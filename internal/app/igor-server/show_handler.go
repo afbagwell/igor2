@@ -45,7 +45,7 @@ func getShowData(user *User) (showData common.ShowData, code int, err error) {
 
 	if err = performDbTx(func(tx *gorm.DB) error {
 
-		refreshPowerChan <- struct{}{}
+		refreshStatusChan <- struct{}{}
 
 		showData = common.ShowData{}
 
@@ -149,7 +149,7 @@ func getPublicShowData() (publicData string, code int, err error) {
 		return
 	} else {
 
-		publicData = "resName,owner,group,nodeCount,nodes,startTime,endTime\n"
+		publicData = "resName,owner,group,nodeCount,nodes,startTime,endTime,distroName\n"
 
 		for _, r := range resList {
 
@@ -167,7 +167,7 @@ func getPublicShowData() (publicData string, code int, err error) {
 				groupName = r.Group.Name
 			}
 
-			resLine := make([]string, 7)
+			resLine := make([]string, 8)
 			resLine[0] = r.Name
 			resLine[1] = r.Owner.Name
 			resLine[2] = groupName
@@ -175,6 +175,7 @@ func getPublicShowData() (publicData string, code int, err error) {
 			resLine[4] = hostRange
 			resLine[5] = r.Start.Format(common.DateTimePublicFormat)
 			resLine[6] = r.End.Format(common.DateTimePublicFormat)
+			resLine[7] = r.Profile.Distro.Name
 			publicData += strings.Join(resLine, ",") + "\n"
 		}
 	}

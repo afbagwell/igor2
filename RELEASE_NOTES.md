@@ -1,5 +1,20 @@
 # Release Notes
 
+## v2.3.0
+
+### Updates
+
+- Host network status uses internal go TCP alive requests to determine if a host is reachable. This removes the linux utility `nmap` as an external dependency called by the server for the same purpose.
+- The entire power + connectivity interface has been re-designed to display additional statuses. Nodes now have indicators for powered-on but no network availability and ping-able status but no TCP connectivity. This is covered more extensively in the documentation.
+- Distro names have been appended to the public endpoint for getting a list of active reservations.
+
+### Fixes
+
+- Fixed a interval timer issue where the notification manager could fill up the log with DEBUG messages when the clock shifted back to Standard Time.
+- Fixed an issue where adding a new node to the cluster would freeze the node status as unknown and would require a server restart to get the status unstuck.
+- Numerous small fixes to igorweb.
+
+
 ## v2.2.1
 
 9-October-2025
@@ -21,7 +36,6 @@
 - Administrators can make a public distro private and owned by the admin group using the --deprecate flag when editing a distro.
 
 ### Updates
-
 
 - More detailed line-wrap formatting within table cells in CLI output for better readability of dense information.
 - Removed some CLI output columns in information tables that had little impact for the amount of space used. All information is still retained in non-table formatted version (using -x flag).

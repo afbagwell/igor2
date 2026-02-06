@@ -147,21 +147,19 @@
         <b-col class="ml-2 col-sm-auto">
           <h2 class="font-weight-bold title-brand">Igor 2.2</h2>
         </b-col>
-        <b-col align-v="bottom">
-          <span v-if="isLoggedIn">
-            <div>
-              <h5
-                class="font-weight-bold text-center"
+        <b-col class="d-flex align-items-center justify-content-center">
+          <div v-if="isLoggedIn" class="w-100">
+            <h5
+                class="font-weight-bold text-center mb-0"
                 id="motdMsg"
-                v-bind:class="{
-                  'text-primary': true,
-                  'text-danger': motdFlag,
-                }"
-              >
-                {{ motd }}
-              </h5>
-            </div>
-          </span>
+                :class="{
+        'text-primary': true,
+        'text-danger': motdFlag,
+      }"
+            >
+              {{ motd }}
+            </h5>
+          </div>
         </b-col>
         <b-col class="mr-3 col-sm-auto" align-v="bottom">
           <b-navbar v-if="isLoggedIn">

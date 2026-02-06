@@ -41,33 +41,48 @@ export default {
       reservations: [],
       clusterName: "",
       clusterPrefix: "",
-      hostsPowered: [],
+      hostsUp: [],
+      hostsOn: [],
+      hostsPing: [],
       hostsDown: [],
       hostsUnknown: [],
       hostsReserved: [],
       hostsOtherReserved: [],
       hostsGrpReserved: [],
-      hostsResvPow: [],
+      hostsResvUp: [],
+      hostsResvOn: [],
+      hostsResvPing: [],
       hostsResvDown: [],
       hostsResvUnknown: [],
       hostsGrpResvPow: [],
+      hostsGrpResvOn: [],
+      hostsGrpResvPing: [],
       hostsGrpResvDown: [],
       hostsGrpResvUnknown: [],
       hostsOtherResvPow: [],
+      hostsOtherResvOn: [],
+      hostsOtherResvPing: [],
       hostsOtherResvDown: [],
       hostsOtherResvUnknown: [],
-      hostsAvlDown: [],
-      hostsAvlUnknown: [],
       hostsAvlPow: [],
+      hostsAvlPing: [],
+      hostsAvlOn: [],
+      hostsAvlDown: [],
+      hostsBlockedPow: [],
+      hostsBlockedPing: [],
+      hostsBlockedOn: [],
       hostsBlockedDown: [],
       hostsBlockedUnknown: [],
-      hostsBlockedPow: [],
       hostsBlocked: [],
+      hostsInstErrPow: [],
+      hostsInstErrPing: [],
+      hostsInstErrOn: [],
       hostsInstErrDown: [],
       hostsInstErrUnknown: [],
-      hostsInstErrPow: [],
       hostsInstErr: [],
       hostsRestrictedPow: [],
+      hostsRestrictedPing: [],
+      hostsRestrictedOn: [],
       hostsRestrictedDown: [],
       hostsRestrictedUnknown: [],
       hostsForResv: [],
@@ -94,7 +109,7 @@ export default {
         // Save Host Data
         this.$store.dispatch("insertHosts", response.data.data.show.hosts);
 
-        // Save Clustername
+        // Save cluster name
         this.$store.dispatch(
           "insertClusterName",
           response.data.data.show.cluster.name
@@ -219,19 +234,34 @@ export default {
       this.getReservedHostStatus(allHosts);
     },
 
+    /**
+     * @typedef {Object} Host
+     * @property {string} name
+     * @property {"up"|"off"|"on"|"ping"|"unknown"} powered
+     */
+
+    /**
+     * @param {Host[]} allHosts
+     */
     getPoweredHosts(allHosts) {
       // let allHosts = this.$store.getters.hosts;
       allHosts.forEach((element) => {
-        if (element.powered === "true") {
-          this.hostsPowered.push(element.name);
-        } else if (element.powered === "false") {
+        if (element.powered === "up") {
+          this.hostsUp.push(element.name);
+        } else if (element.powered === "off") {
           this.hostsDown.push(element.name);
-        } else if (element.powered === "unknown") {
+        } else if (element.powered === "on") {
+          this.hostsOn.push(element.name);
+        } else if (element.powered === "ping") {
+          this.hostsPing.push(element.name);
+        } else {
           this.hostsUnknown.push(element.name);
         }
       });
-      this.$store.dispatch("insertHostsPowered", this.hostsPowered);
+      this.$store.dispatch("insertHostsUp", this.hostsUp);
       this.$store.dispatch("insertHostsDown", this.hostsDown);
+      this.$store.dispatch("insertHostsOn", this.hostsOn);
+      this.$store.dispatch("insertHostsPing", this.hostsPing);
       this.$store.dispatch("insertHostsUnknown", this.hostsUnknown);
     },
 
@@ -239,11 +269,7 @@ export default {
       let allReservations = this.$store.getters.reservations;
       let user = sessionStorage.getItem("username");
       allReservations.forEach((element) => {
-        if (element.start > moment().unix()) {
-          this.futureResv = true;
-        } else {
-          this.futureResv = false;
-        }
+        this.futureResv = element.start > moment().unix();
         if (!this.futureResv) {
           let owner = element.owner;
           if (owner === user) {
@@ -277,17 +303,29 @@ export default {
     getReservedHostStatus(allHosts) {
       allHosts.forEach((element) => {
         if (this.hostsReserved.includes(element.name)) {
-          if (this.hostsPowered.includes(element.name)) {
+          if (this.hostsUp.includes(element.name)) {
             if (this.hostsInstErr.includes(element.name)) {
               this.hostsInstErrPow.push(element.name);
             } else {
-              this.hostsResvPow.push(element.name);
+              this.hostsResvUp.push(element.name);
             }
           } else if (this.hostsDown.includes(element.name)) {
             if (this.hostsInstErr.includes(element.name)) {
               this.hostsInstErrDown.push(element.name);
             } else {
               this.hostsResvDown.push(element.name);
+            }
+          } else if (this.hostsOn.includes(element.name)) {
+            if (this.hostsInstErr.includes(element.name)) {
+              this.hostsInstErrOn.push(element.name);
+            } else {
+              this.hostsResvOn.push(element.name);
+            }
+          } else if (this.hostsPing.includes(element.name)) {
+            if (this.hostsInstErr.includes(element.name)) {
+              this.hostsInstErrPing.push(element.name);
+            } else {
+              this.hostsResvPing.push(element.name);
             }
           } else {
             if (this.hostsInstErr.includes(element.name)) {
@@ -297,7 +335,7 @@ export default {
             }
           }
         } else if (this.hostsOtherReserved.includes(element.name)) {
-          if (this.hostsPowered.includes(element.name)) {
+          if (this.hostsUp.includes(element.name)) {
             this.hostsOtherResvPow.push(element.name);
           } else if (this.hostsDown.includes(element.name)) {
             this.hostsOtherResvDown.push(element.name);
@@ -305,7 +343,7 @@ export default {
             this.hostsOtherResvUnknown.push(element.name);
           }
         } else if (this.hostsGrpReserved.includes(element.name)) {
-          if (this.hostsPowered.includes(element.name)) {
+          if (this.hostsUp.includes(element.name)) {
             this.hostsGrpResvPow.push(element.name);
           } else if (this.hostsDown.includes(element.name)) {
             this.hostsGrpResvDown.push(element.name);
@@ -313,7 +351,7 @@ export default {
             this.hostsGrpResvUnknown.push(element.name);
           }
         } else if (this.hostsBlocked.includes(element.name)) {
-          if (this.hostsPowered.includes(element.name)) {
+          if (this.hostsUp.includes(element.name)) {
             this.hostsBlockedPow.push(element.name);
           } else if (this.hostsDown.includes(element.name)) {
             this.hostsBlockedDown.push(element.name);
@@ -333,7 +371,7 @@ export default {
             } else {
               this.hostsAvlUnknown.push(element.name);
             }
-          } else if (this.hostsPowered.includes(element.name)) {
+          } else if (this.hostsUp.includes(element.name)) {
             if (element.restricted) {
               this.hostsRestrictedPow.push(element.name);
             } else {
@@ -343,45 +381,33 @@ export default {
         }
       });
 
-      this.$store.dispatch("insertHostsResvPow", this.hostsResvPow);
+      this.$store.dispatch("insertHostsResvUp", this.hostsResvUp);
+      this.$store.dispatch("insertHostsResvOn", this.hostsResvOn);
+      this.$store.dispatch("insertHostsResvPing", this.hostsResvPing);
       this.$store.dispatch("insertHostsResvDown", this.hostsResvDown);
       this.$store.dispatch("insertHostsResvUnknown", this.hostsResvUnknown);
       this.$store.dispatch("insertHostsGrpResvPow", this.hostsGrpResvPow);
+      this.$store.dispatch("insertHostsGrpResvOn", this.hostsGrpResvOn);
+      this.$store.dispatch("insertHostsGrpResvPing", this.hostsGrpResvPing);
       this.$store.dispatch("insertHostsGrpResvDown", this.hostsGrpResvDown);
-      this.$store.dispatch(
-        "insertHostsGrpResvUnknown",
-        this.hostsGrpResvUnknown
-      );
+      this.$store.dispatch("insertHostsGrpResvUnknown", this.hostsGrpResvUnknown);
       this.$store.dispatch("insertHostsOtherResvPow", this.hostsOtherResvPow);
+      this.$store.dispatch("insertHostsOtherResvOn", this.hostsOtherResvOn);
+      this.$store.dispatch("insertHostsOtherResvPing", this.hostsOtherResvPing);
       this.$store.dispatch("insertHostsOtherResvDown", this.hostsOtherResvDown);
-      this.$store.dispatch(
-        "insertHostsOtherResvUnknown",
-        this.hostsOtherResvUnknown
-      );
+      this.$store.dispatch("insertHostsOtherResvUnknown", this.hostsOtherResvUnknown);
       this.$store.dispatch("insertHostsAvlDown", this.hostsAvlDown);
       this.$store.dispatch("insertHostsAvlUnknown", this.hostsAvlUnknown);
       this.$store.dispatch("insertHostsAvlPow", this.hostsAvlPow);
       this.$store.dispatch("insertHostsBlockedDown", this.hostsBlockedDown);
-      this.$store.dispatch(
-        "insertHostsBlockedUnknown",
-        this.hostsBlockedUnknown
-      );
+      this.$store.dispatch("insertHostsBlockedUnknown", this.hostsBlockedUnknown);
       this.$store.dispatch("insertHostsBlockedPow", this.hostsBlockedPow);
       this.$store.dispatch("insertHostsInstErrDown", this.hostsInstErrDown);
-      this.$store.dispatch(
-        "insertHostsInstErrUnknown",
-        this.hostsInstErrUnknown
-      );
+      this.$store.dispatch("insertHostsInstErrUnknown", this.hostsInstErrUnknown);
       this.$store.dispatch("insertHostsInstErrPow", this.hostsInstErrPow);
       this.$store.dispatch("insertHostsRestrictedPow", this.hostsRestrictedPow);
-      this.$store.dispatch(
-        "insertHostsRestrictedDown",
-        this.hostsRestrictedDown
-      );
-      this.$store.dispatch(
-        "insertHostsRestrictedUnknown",
-        this.hostsRestrictedUnknown
-      );
+      this.$store.dispatch("insertHostsRestrictedDown", this.hostsRestrictedDown);
+      this.$store.dispatch("insertHostsRestrictedUnknown", this.hostsRestrictedUnknown);
     },
 
     fetchFromServer() {
@@ -389,24 +415,32 @@ export default {
     },
 
     clearDataState() {
-      this.hostsPowered = [];
+      this.hostsUp = [];
+      this.hostsOn = [];
+      this.hostsPing = [];
       this.hostsDown = [];
       this.hostsUnknown = [];
       this.hostsReserved = [];
       this.hostsGrpReserved = [];
       this.hostsOtherReserved = [];
       this.hostsResvPow = [];
+      this.hostsResvOn = [];
+      this.hostsResvPing = [];
       this.hostsResvDown = [];
       this.hostsResvUnknown = [];
       this.hostsGrpResvPow = [];
+      this.hostsGrpResvOn = [];
+      this.hostsGrpResvPing = [];
       this.hostsGrpResvDown = [];
       this.hostsGrpResvUnknown = [];
       this.hostsOtherResvPow = [];
+      this.hostsOtherResvOn = [];
+      this.hostsOtherResvPing = [];
       this.hostsOtherResvDown = [];
       this.hostsOtherResvUnknown = [];
+      this.hostsAvlPow = [];
       this.hostsAvlDown = [];
       this.hostsAvlUnknown = [];
-      this.hostsAvlPow = [];
       this.hostsBlockedDown = [];
       this.hostsBlockedUnknown = [];
       this.hostsBlockedPow = [];
@@ -441,7 +475,7 @@ export default {
       axios
         .get(showUrl, options)
         .then((response) => {
-          // Fetching data that needs auto refersh frequently
+          // Fetching data that needs auto refresh frequently
           // Save server timezone
           this.$store.dispatch("saveServerTime", response.data.serverTime);
 
@@ -495,7 +529,7 @@ export default {
 
             // Save reserved hosts with installation error
             userReservations.forEach((element) => {
-              if (element.installError != "") {
+              if (element.installError !== "") {
                 this.hostsInstErr.push(element.name);
               }
             });

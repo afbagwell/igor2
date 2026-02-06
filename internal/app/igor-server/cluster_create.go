@@ -239,6 +239,7 @@ func doCreateClusters(r *http.Request) (clusters []Cluster, hostnameList []strin
 		return nil, nil, status, err
 	}
 
+	clusterUpdateChan <- struct{}{}
 	for _, c := range cConfigs {
 		c.storeClusterRanges()
 	}

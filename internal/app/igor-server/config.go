@@ -64,6 +64,7 @@ type Config struct {
 		ImageStagePath   string   `yaml:"imageStagePath" json:"imageStagePath"`
 		ScriptDir        string   `yaml:"scriptDir" json:"scriptDir"`
 		UserLocalBootDC  bool     `yaml:"userLocalBootDC" json:"userLocalBootDC"`
+		ProbePorts       []uint   `yaml:"probePorts" json:"probePorts"`
 	} `yaml:"server" json:"server"`
 
 	Auth struct {
@@ -196,6 +197,7 @@ type Config struct {
 		PowerOn          string `yaml:"powerOn" json:"powerOn"`
 		PowerOff         string `yaml:"powerOff" json:"powerOff"`
 		PowerCycle       string `yaml:"powerCycle" json:"powerCycle"`
+		PowerStatus      string `yaml:"powerStatus" json:"powerStatus"`
 	} `yaml:"externalCmds" json:"externalCmds"`
 }
 

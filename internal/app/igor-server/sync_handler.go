@@ -156,7 +156,7 @@ func syncArista(force, quiet bool, scope string) (result map[string]interface{},
 	// report to construct
 	report := make(map[string]map[string]string)
 	// aggregate all to report and sync the node if force
-	powerMapMU.Lock()
+	hostStatusMapMU.Lock()
 	for _, host := range hosts {
 		host_hostName := host.HostName
 		host_name := host.Name
@@ -170,13 +170,17 @@ func syncArista(force, quiet bool, scope string) (result map[string]interface{},
 			data["res_vlan"] = "(unknown)"
 		}
 
-		if powerInfo, ok := powerMap[host_hostName]; ok {
-			if powerInfo == nil {
+		if powerInfo, ok := hostStatusMap[host_hostName]; ok {
+			if powerInfo == HostStatusUnknown {
 				data["powered"] = "unknown"
-			} else if *powerInfo {
-				data["powered"] = PowerOn
-			} else {
+			} else if powerInfo == HostStatusOff {
 				data["powered"] = PowerOff
+			} else if powerInfo == HostStatusOn {
+				data["powered"] = PowerOn
+			} else if powerInfo == HostStatusPingable {
+				data["powered"] = "pingable"
+			} else {
+				data["powered"] = "up"
 			}
 		} else {
 			data["powered"] = "unknown"
@@ -202,7 +206,7 @@ func syncArista(force, quiet bool, scope string) (result map[string]interface{},
 		}
 		report[host_name] = data
 	}
-	powerMapMU.Unlock()
+	hostStatusMapMU.Unlock()
 
 	logger.Debug().Msgf("report compiled by syncArista: %v", report)
 	result["command"] = "arista"

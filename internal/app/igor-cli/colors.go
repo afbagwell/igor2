@@ -12,16 +12,18 @@ import (
 )
 
 const (
-	FgUp      = 15  // node is up (white)
-	FgDown    = 1   // node is down (red)
-	FgPowerNA = 214 // node power status unknown (orange)
+	FgUp       = 15  // node is up (white)
+	FgPingable = 214 // node power status unknown (orange)
+	FgPowerNA  = 214 // will be re-mapped with cyan to "powered on only"
+	FgPowerOff = 1   // node is turned off (red)
+	FgPowered  = 27  // node chassis reports power is on (cyan)
 
 	BgUnreserved = 0   // node unreserved (black)
 	BgResYes     = 2   // node reserved and writable (green)
 	BgResNo      = 5   // node reserved and not writable (magenta)
 	BgBlocked    = 3   // node blocked (yellow)
 	BgRestricted = 213 // node restricted from user (bright pink)
-	BgError      = 75  // node install error (bright cyan)
+	BgError      = 9   // node install error (bright red)
 )
 
 var (
@@ -32,11 +34,16 @@ var (
 	simplePrint bool
 
 	cUnreservedUp      = color.S256(FgUp, BgUnreserved)
-	cUnreservedDown    = color.S256(FgDown, BgUnreserved).AddOpts(color.OpBold)
+	cUnreservedDown    = color.S256(FgPowerOff, BgUnreserved).AddOpts(color.OpBold)
 	cUnreservedPowerNA = color.S256(FgPowerNA, BgUnreserved).AddOpts(color.OpBold)
 	cInstError         = color.S256(FgUp, BgError).AddOpts(color.OpBold)
 	cBlockedUp         = color.S256(FgUp, BgBlocked).AddOpts(color.OpBold)
 	cRestrictedUp      = color.S256(FgUp, BgRestricted)
+
+	cL3NoRes = color.S256(123, BgUnreserved).AddOpts(color.OpBold)
+	cL3Res   = color.S256(123, BgResYes).AddOpts(color.OpBold)
+	cOnNoRes = color.S256(123, BgUnreserved).AddOpts(color.OpBold)
+	cOnRes   = color.S256(123, BgResYes).AddOpts(color.OpBold)
 
 	cOwnerRes = color.S256(15, 2)
 	cOtherRes = color.S256(15, 5)
@@ -48,12 +55,14 @@ var (
 	cMotdNotUrgent = color.S256(3).AddOpts(color.OpBold)
 
 	cFuture      = color.S256(15, 247) // white text, gray background
-	cFutureNodes = color.S256(247, BgUnreserved).AddOpts(color.OpItalic)
+	cFutureNodes = color.S256(15, 247).AddOpts(color.OpBold, color.OpItalic)
 
 	hsAvailable = color.S256(2)
 	hsReserved  = color.S256(3)
 	pUp         = color.S256(10).AddOpts(color.OpBold)
-	pDown       = color.S256(9).AddOpts(color.OpBold)
+	pOff        = color.S256(9).AddOpts(color.OpBold)
+	pPing       = color.S256(3).AddOpts(color.OpBold)
+	pOn         = color.S256(27).AddOpts(color.OpBold)
 	pUnknown    = color.S256(3).AddOpts(color.OpBold)
 
 	cRespSuccess = color.FgLightGreen

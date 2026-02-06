@@ -68,7 +68,7 @@ func handleReadClusters(w http.ResponseWriter, r *http.Request) {
 		clog.Error().Msgf("%s error - %v", actionPrefix, err)
 	} else if doFileDump || getYamlFile {
 
-		yDoc, err = assembleYamlOutput(clusters)
+		yDoc, _, err = assembleYamlOutput(clusters)
 		if err != nil {
 			status = http.StatusInternalServerError
 			rb.Message = err.Error()

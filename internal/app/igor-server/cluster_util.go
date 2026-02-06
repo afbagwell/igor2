@@ -17,9 +17,10 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func assembleYamlOutput(clusters []Cluster) ([]byte, error) {
+func assembleYamlOutput(clusters []Cluster) ([]byte, []ClusterConfig, error) {
 
-	ccs := make(map[string]ClusterConfig)
+	ccsMap := make(map[string]ClusterConfig)
+	ccsList := make([]ClusterConfig, 0)
 
 	for _, c := range clusters {
 		cc := &ClusterConfig{}
@@ -37,14 +38,15 @@ func assembleYamlOutput(clusters []Cluster) ([]byte, error) {
 			tempMap["bootMode"] = h.BootMode
 			cc.HostMap[h.SequenceID] = tempMap
 		}
-		ccs[c.Name] = *cc
+		ccsMap[c.Name] = *cc
+		ccsList = append(ccsList, *cc)
 	}
 
-	yDoc, err := yaml.Marshal(&ccs)
+	yDoc, err := yaml.Marshal(&ccsMap)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return yDoc, nil
+	return yDoc, ccsList, nil
 }
 
 func updateClusterConfigFile(yDoc []byte, clog *zl.Logger) (string, error) {

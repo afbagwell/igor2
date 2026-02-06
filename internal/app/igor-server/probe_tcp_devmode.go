@@ -8,16 +8,16 @@ package igorserver
 
 var _doInitOn = true
 
-type NmapPowerStatus struct{}
+type TcpProbe struct{}
 
-func NewNmapPowerStatus() IPowerStatus {
-	return &NmapPowerStatus{}
+func NewTcpProbe() IHostProbe {
+	return &TcpProbe{}
 }
 
-func (nr *NmapPowerStatus) updateHosts(hosts []Host) {
+func (nr *TcpProbe) probeHosts(hosts []Host) {
 
 	if len(hosts) == 0 {
-		logger.Warn().Msg("no hosts provided on call to updateHosts")
+		logger.Warn().Msg("no hosts provided on call to probeHosts")
 		return
 	}
 
@@ -34,16 +34,16 @@ func initToOn(hosts []Host) {
 	hostNames := hostNamesOfHosts(hosts)
 	rHosts, _ := getReservedHosts()
 
-	powerMapMU.Lock()
+	hostStatusMapMU.Lock()
 	for _, h := range hostNames {
-		powerVal := false
+		powerVal := HostStatusOff
 		for _, rh := range rHosts {
 			if h == rh.HostName && rh.State > HostAvailable {
-				powerVal = true
+				powerVal = HostStatusUp
 				break
 			}
 		}
-		powerMap[h] = &powerVal
+		hostStatusMap[h] = powerVal
 	}
-	powerMapMU.Unlock()
+	hostStatusMapMU.Unlock()
 }

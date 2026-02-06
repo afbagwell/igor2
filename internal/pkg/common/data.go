@@ -32,7 +32,9 @@ type ReservationData struct {
 	Hosts        []string `json:"hosts"`
 	HostRange    string   `json:"hostRange"`
 	HostsUp      string   `json:"hostsUp"`
-	HostsDown    string   `json:"hostsDown"`
+	HostsOn      string   `json:"hostsOn"`
+	HostsPing    string   `json:"hostsPing"`
+	HostsOff     string   `json:"hostsOff"`
 	HostsPowerNA string   `json:"hostsPowerNA"`
 	Installed    bool     `json:"installed"`
 	InstallError string   `json:"installError"`

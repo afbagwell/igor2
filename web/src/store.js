@@ -19,40 +19,58 @@ export default new Vuex.Store({
     reservationsFilteredLength: 0,
     clusterName: "",
     clusterPrefix: "",
-    hostsPowered: [],
+    hostsUp: [],
+    hostsOn: [],
+    hostsPing: [],
     hostsDown: [],
     hostsUnknown: [],
     hostsReserved: [],
     hostsOtherReserved: [],
     hostsGrpReserved: [],
-    hostsResvPow: [],
+    hostsResvUp: [],
+    hostsResvPing: [],
+    hostsResvOn: [],
     hostsResvDown: [],
     hostsResvUnknown: [],
     hostsGrpResvPow: [],
+    hostsGrpResvPing: [],
+    hostsGrpResvOn: [],
     hostsGrpResvDown: [],
     hostsGrpResvUnknown: [],
     hostsOtherResvPow: [],
+    hostsOtherResvPing: [],
+    hostsOtherResvOn: [],
     hostsOtherResvDown: [],
     hostsOtherResvUnknown: [],
+    hostsAvlPow: [],
+    hostsAvlPing: [],
+    hostsAvlOn: [],
     hostsAvlDown: [],
     hostsAvlUnknown: [],
-    hostsAvlPow: [],
+    hostsBlockedPow: [],
+    hostsBlockedPing: [],
+    hostsBlockedOn: [],
     hostsBlockedDown: [],
     hostsBlockedUnknown: [],
-    hostsBlockedPow: [],
     hostsBlocked: [],
+    hostsInstErrPow: [],
+    hostsInstErrPing: [],
+    hostsInstErrOn: [],
     hostsInstErrDown: [],
     hostsInstErrUnknown: [],
-    hostsInstErrPow: [],
     hostsInstErr: [],
-    hostsRestrictedDown: [],
     hostsRestrictedPow: [],
+    hostsRestrictedPing: [],
+    hostsRestrictedOn: [],
+    hostsRestrictedDown: [],
     hostsRestrictedUnknown: [],
     hostsForResv: [],
     selectedHosts: [],
     selectedHostsCount: 0,
     selectedHostID: [],
     hostSelectedPow: [],
+    hostSelectedPing: [],
+    hostSelectedOn: [],
     hostSelectedDown: [],
     hostSelectedUnknown: [],
     groups: [],
@@ -157,9 +175,17 @@ export default new Vuex.Store({
     INSERT_CLUSTERPREFIX(state, payload) {
       state.clusterPrefix = payload;
     },
-    INSERT_HOSTSPOWERED(state, payload) {
-      state.hostsPowered = payload;
-      state.hostsPowered = [...new Set(state.hostsPowered)];
+    INSERT_HOSTSUP(state, payload) {
+      state.hostsUp = payload;
+      state.hostsUp = [...new Set(state.hostsUp)];
+    },
+    INSERT_HOSTSPING(state, payload) {
+      state.hostsPing = payload;
+      state.hostsPing = [...new Set(state.hostsPing)];
+    },
+    INSERT_HOSTSON(state, payload) {
+      state.hostsOn = payload;
+      state.hostsOn = [...new Set(state.hostsOn)];
     },
     INSERT_HOSTSDOWN(state, payload) {
       state.hostsDown = payload;
@@ -169,9 +195,17 @@ export default new Vuex.Store({
       state.hostsUnknown = payload;
       state.hostsUnknown = [...new Set(state.hostsUnknown)];
     },
-    ADD_HOSTSPOWERED(state, payload) {
-      state.hostsPowered.push(payload);
-      state.hostsPowered = [...new Set(state.hostsPowered)];
+    ADD_HOSTSUP(state, payload) {
+      state.hostsUp.push(payload);
+      state.hostsUp = [...new Set(state.hostsUp)];
+    },
+    ADD_HOSTSPING(state, payload) {
+      state.hostsPing.push(payload);
+      state.hostsPing = [...new Set(state.hostsPing)];
+    },
+    ADD_HOSTSON(state, payload) {
+      state.hostsOn.push(payload);
+      state.hostsOn = [...new Set(state.hostsOn)];
     },
     ADD_HOSTSDOWN(state, payload) {
       state.hostsDown.push(payload);
@@ -191,9 +225,17 @@ export default new Vuex.Store({
       state.hostsOtherReserved = payload;
       state.hostsOtherReserved = [...new Set(state.hostsOtherReserved)];
     },
-    INSERT_HOSTSRESVPOW(state, payload) {
-      state.hostsResvPow = payload;
-      state.hostsResvPow = [...new Set(state.hostsResvPow)];
+    INSERT_HOSTSRESVUP(state, payload) {
+      state.hostsResvUp = payload;
+      state.hostsResvUp = [...new Set(state.hostsResvUp)];
+    },
+    INSERT_HOSTSRESVPING(state, payload) {
+      state.hostsResvPing = payload;
+      state.hostsResvPing = [...new Set(state.hostsResvPing)];
+    },
+    INSERT_HOSTSRESVON(state, payload) {
+      state.hostsResvOn = payload;
+      state.hostsResvOn = [...new Set(state.hostsResvOn)];
     },
     INSERT_HOSTSRESVDOWN(state, payload) {
       state.hostsResvDown = payload;
@@ -207,6 +249,14 @@ export default new Vuex.Store({
       state.hostsGrpResvPow = payload;
       state.hostsGrpResvPow = [...new Set(state.hostsGrpResvPow)];
     },
+    INSERT_HOSTSGRPRESVPING(state, payload) {
+      state.hostsGrpResvPing = payload;
+      state.hostsGrpResvPing = [...new Set(state.hostsGrpResvPing)];
+    },
+    INSERT_HOSTSGRPRESVON(state, payload) {
+      state.hostsGrpResvOn = payload;
+      state.hostsGrpResvOn = [...new Set(state.hostsGrpResvOn)];
+    },
     INSERT_HOSTSGRPRESVDOWN(state, payload) {
       state.hostsGrpResvDown = payload;
       state.hostsGrpResvDown = [...new Set(state.hostsGrpResvDown)];
@@ -219,6 +269,14 @@ export default new Vuex.Store({
       state.hostsOtherResvPow = payload;
       state.hostsOtherResvPow = [...new Set(state.hostsOtherResvPow)];
     },
+    INSERT_HOSTSOTHERRESVPING(state, payload) {
+      state.hostsOtherResvPing= payload;
+      state.hostsOtherResvPing = [...new Set(state.hostsOtherResvPing)];
+    },
+    INSERT_HOSTSOTHERRESVON(state, payload) {
+      state.hostsOtherResvOn = payload;
+      state.hostsOtherResvOn = [...new Set(state.hostsOtherResvOn)];
+    },
     INSERT_HOSTSOTHERRESVDOWN(state, payload) {
       state.hostsOtherResvDown = payload;
       state.hostsOtherResvDown = [...new Set(state.hostsOtherResvDown)];
@@ -226,6 +284,18 @@ export default new Vuex.Store({
     INSERT_HOSTSOTHERRESVUNKOWN(state, payload) {
       state.hostsOtherResvUnknown = payload;
       state.hostsOtherResvUnknown = [...new Set(state.hostsOtherResvUnknown)];
+    },
+    INSERT_HOSTSAVLPOW(state, payload) {
+      state.hostsAvlPow = payload;
+      state.hostsAvlPow = [...new Set(state.hostsAvlPow)];
+    },
+    INSERT_HOSTSAVLPING(state, payload) {
+      state.hostsAvlPing = payload;
+      state.hostsAvlPing = [...new Set(state.hostsAvlPing)];
+    },
+    INSERT_HOSTSAVLON(state, payload) {
+      state.hostsAvlOn = payload;
+      state.hostsAvlOn = [...new Set(state.hostsAvlOn)];
     },
     INSERT_HOSTSAVLDOWN(state, payload) {
       state.hostsAvlDown = payload;
@@ -235,9 +305,17 @@ export default new Vuex.Store({
       state.hostsAvlUnknown = payload;
       state.hostsAvlUnknown = [...new Set(state.hostsAvlUnknown)];
     },
-    INSERT_HOSTSAVLPOW(state, payload) {
-      state.hostsAvlPow = payload;
-      state.hostsAvlPow = [...new Set(state.hostsAvlPow)];
+    INSERT_HOSTSBLOCKEDPOW(state, payload) {
+      state.hostsBlockedPow = payload;
+      state.hostsBlockedPow = [...new Set(state.hostsBlockedPow)];
+    },
+    INSERT_HOSTSBLOCKEDPING(state, payload) {
+      state.hostsBlockedPing = payload;
+      state.hostsBlockedPing = [...new Set(state.hostsBlockedPing)];
+    },
+    INSERT_HOSTSBLOCKEDON(state, payload) {
+      state.hostsBlockedOn = payload;
+      state.hostsBlockedOn = [...new Set(state.hostsBlockedOn)];
     },
     INSERT_HOSTSBLOCKEDDOWN(state, payload) {
       state.hostsBlockedDown = payload;
@@ -247,10 +325,6 @@ export default new Vuex.Store({
       state.hostsBlockedUnknown = payload;
       state.hostsBlockedUnknown = [...new Set(state.hostsBlockedUnknown)];
     },
-    INSERT_HOSTSBLOCKEDPOW(state, payload) {
-      state.hostsBlockedPow = payload;
-      state.hostsBlockedPow = [...new Set(state.hostsBlockedPow)];
-    },
     INSERT_HOSTSBLOCKED(state, payload) {
       state.hostsBlocked = payload;
       state.hostsBlocked = [...new Set(state.hostsBlocked)];
@@ -258,6 +332,14 @@ export default new Vuex.Store({
     INSERT_HOSTSRESTRICTEDPOW(state, payload) {
       state.hostsRestrictedPow = payload;
       state.hostsRestrictedPow = [...new Set(state.hostsRestrictedPow)];
+    },
+    INSERT_HOSTSRESTRICTEDPING(state, payload) {
+      state.hostsRestrictedPing = payload;
+      state.hostsRestrictedPing = [...new Set(state.hostsRestrictedPing)];
+    },
+    INSERT_HOSTSRESTRICTEDON(state, payload) {
+      state.hostsRestrictedOn = payload;
+      state.hostsRestrictedOn = [...new Set(state.hostsRestrictedOn)];
     },
     INSERT_HOSTSRESTRICTEDDOWN(state, payload) {
       state.hostsRestrictedDown = payload;
@@ -267,6 +349,18 @@ export default new Vuex.Store({
       state.hostsRestrictedUnknown = payload;
       state.hostsRestrictedUnknown = [...new Set(state.hostsRestrictedUnknown)];
     },
+    INSERT_HOSTSINSTERRPOW(state, payload) {
+      state.hostsInstErrPow = payload;
+      state.hostsInstErrPow = [...new Set(state.hostsInstErrPow)];
+    },
+    INSERT_HOSTSINSTERRPING(state, payload) {
+      state.hostsInstErrPing = payload;
+      state.hostsInstErrPing = [...new Set(state.hostsInstErrPing)];
+    },
+    INSERT_HOSTSINSTERRON(state, payload) {
+      state.hostsInstErrOn = payload;
+      state.hostsInstErrOn = [...new Set(state.hostsInstErrOn)];
+    },
     INSERT_HOSTSINSTERRDOWN(state, payload) {
       state.hostsInstErrDown = payload;
       state.hostsInstErrDown = [...new Set(state.hostsInstErrDown)];
@@ -274,11 +368,6 @@ export default new Vuex.Store({
     INSERT_HOSTSINSTERRUNKNOWN(state, payload) {
       state.hostsInstErrUnknown = payload;
       state.hostsInstErrUnknown = [...new Set(state.hostsInstErrUnknown)];
-    },
-
-    INSERT_HOSTSINSTERRPOW(state, payload) {
-      state.hostsInstErrPow = payload;
-      state.hostsInstErrPow = [...new Set(state.hostsInstErrPow)];
     },
     INSERT_HOSTSINSTERR(state, payload) {
       state.hostsInstErr = payload;
@@ -356,9 +445,17 @@ export default new Vuex.Store({
     },
 
     // Remove/Delete Hosts, Reservations, Profile, Distro
-    REMOVE_HOSTSRESVPOW(state, payload) {
+    REMOVE_HOSTSRESVUP(state, payload) {
       state.hostsAvlPow.push(payload.value);
-      state.hostsResvPow.splice(payload.key, 1);
+      state.hostsResvUp.splice(payload.key, 1);
+    },
+    REMOVE_HOSTSRESVPING(state, payload) {
+      state.hostsAvlPing.push(payload.value);
+      state.hostsResvPing.splice(payload.key, 1);
+    },
+    REMOVE_HOSTSRESVON(state, payload) {
+      state.hostsAvlOn.push(payload.value);
+      state.hostsResvOn.splice(payload.key, 1);
     },
     REMOVE_HOSTSRESVDOWN(state, payload) {
       state.hostsAvlDown.push(payload.value);
@@ -368,16 +465,29 @@ export default new Vuex.Store({
       state.hostsAvlUnknown.push(payload.value);
       state.hostsResvUnknown.splice(payload.key, 1);
     },
+
+    REMOVE_HOSTSUP(state, payload) {
+      const index = state.hostsUp.findIndex((host) => host === payload);
+      if (~index) {
+        state.hostsUp.splice(index, 1);
+      }
+    },
+    REMOVE_HOSTSPING(state, payload) {
+      const index = state.hostsPing.findIndex((host) => host === payload);
+      if (~index) {
+        state.hostsPing.splice(index, 1);
+      }
+    },
+    REMOVE_HOSTSON(state, payload) {
+      const index = state.hostsOn.findIndex((host) => host === payload);
+      if (~index) {
+        state.hostsOn.splice(index, 1);
+      }
+    },
     REMOVE_HOSTSDOWN(state, payload) {
       const index = state.hostsDown.findIndex((host) => host === payload);
       if (~index) {
         state.hostsDown.splice(index, 1);
-      }
-    },
-    REMOVE_HOSTSPOWERED(state, payload) {
-      const index = state.hostsPowered.findIndex((host) => host === payload);
-      if (~index) {
-        state.hostsPowered.splice(index, 1);
       }
     },
     REMOVE_HOSTSUNKNOWN(state, payload) {
@@ -390,6 +500,14 @@ export default new Vuex.Store({
       state.hostsAvlPow.push(payload.value);
       state.hostsInstErrPow.splice(payload.key, 1);
     },
+    REMOVE_HOSTSINSTERRPING(state, payload) {
+      state.hostsAvlPing.push(payload.value);
+      state.hostsInstErrPing.splice(payload.key, 1);
+    },
+    REMOVE_HOSTSINSTERRON(state, payload) {
+      state.hostsAvlOn.push(payload.value);
+      state.hostsInstErrOn.splice(payload.key, 1);
+    },
     REMOVE_HOSTSINSTERRDOWN(state, payload) {
       state.hostsAvlDown.push(payload.value);
       state.hostsInstErrDown.splice(payload.key, 1);
@@ -399,15 +517,18 @@ export default new Vuex.Store({
       state.hostsInstErrUnknown.splice(payload.key, 1);
     },
     REMOVE_HOSTSAVLPOW(state, payload) {
-      state.hostsResvPow.push(payload.value);
       state.hostsAvlPow.splice(payload.key, 1);
     },
+    REMOVE_HOSTSAVLPING(state, payload) {
+      state.hostsAvlPing.splice(payload.key, 1);
+    },
+    REMOVE_HOSTSAVLON(state, payload) {
+      state.hostsAvlOn.splice(payload.key, 1);
+    },
     REMOVE_HOSTSAVLDOWN(state, payload) {
-      state.hostsResvDown.push(payload.value);
       state.hostsAvlDown.splice(payload.key, 1);
     },
     REMOVE_HOSTSAVLUNKNOWN(state, payload) {
-      state.hostsResvUnknown.push(payload.value);
       state.hostsAvlUnknown.splice(payload.key, 1);
     },
     ADD_HOSTSFORRESV(state, payload) {
@@ -419,6 +540,14 @@ export default new Vuex.Store({
     UPDATE_HOSTSINSTERRPOW(state, payload) {
       state.hostsInstErrPow.push(payload.value);
       state.hostsAvlPow.splice(payload.key, 1);
+    },
+    UPDATE_HOSTSINSTERRPING(state, payload) {
+      state.hostsInstErrPing.push(payload.value);
+      state.hostsAvlPing.splice(payload.key, 1);
+    },
+    UPDATE_HOSTSINSTERRON(state, payload) {
+      state.hostsInstErrOn.push(payload.value);
+      state.hostsAvlOn.splice(payload.key, 1);
     },
     UPDATE_HOSTSINSTERRDOWN(state, payload) {
       state.hostsInstErrDown.push(payload.value);
@@ -498,13 +627,20 @@ export default new Vuex.Store({
       state.selectedHostsCount = payload;      
     },
     SELECTED_RESVHOSTID(state, payload) {
-      state.selectedHosts = [];
       state.selectedHostID = payload;
       state.selectedHostID = [...new Set(state.selectedHostID)];
     },
     SELECTED_POW(state, payload) {
       state.hostSelectedPow = [];
       state.hostSelectedPow = payload;
+    },
+    SELECTED_PING(state, payload) {
+      state.hostSelectedPing = [];
+      state.hostSelectedPing = payload;
+    },
+    SELECTED_ON(state, payload) {
+      state.hostSelectedOn = [];
+      state.hostSelectedOn = payload;
     },
     SELECTED_DOWN(state, payload) {
       state.hostSelectedDown = [];
@@ -741,9 +877,23 @@ export default new Vuex.Store({
         commit("INSERT_ERROR", error);
       }
     },
-    insertHostsPowered({ commit }, payload) {
+    insertHostsUp({ commit }, payload) {
       try {
-        commit("INSERT_HOSTSPOWERED", payload);
+        commit("INSERT_HOSTSUP", payload);
+      } catch (error) {
+        commit("INSERT_ERROR", error);
+      }
+    },
+    insertHostsOn({ commit }, payload) {
+      try {
+        commit("INSERT_HOSTSON", payload);
+      } catch (error) {
+        commit("INSERT_ERROR", error);
+      }
+    },
+    insertHostsPing({ commit }, payload) {
+      try {
+        commit("INSERT_HOSTSPING", payload);
       } catch (error) {
         commit("INSERT_ERROR", error);
       }
@@ -769,9 +919,23 @@ export default new Vuex.Store({
         commit("INSERT_ERROR", error);
       }
     },
-    removeHostsPowered({ commit }, payload) {
+    removeHostsUp({ commit }, payload) {
       try {
-        commit("REMOVE_HOSTSPOWERED", payload);
+        commit("REMOVE_HOSTSUP", payload);
+      } catch (error) {
+        commit("INSERT_ERROR", error);
+      }
+    },
+    removeHostsOn({ commit }, payload) {
+      try {
+        commit("REMOVE_HOSTSON", payload);
+      } catch (error) {
+        commit("INSERT_ERROR", error);
+      }
+    },
+    removeHostsPing({ commit }, payload) {
+      try {
+        commit("REMOVE_HOSTSPING", payload);
       } catch (error) {
         commit("INSERT_ERROR", error);
       }
@@ -783,9 +947,23 @@ export default new Vuex.Store({
         commit("INSERT_ERROR", error);
       }
     },
-    addHostsPowered({ commit }, payload) {
+    addHostsUp({ commit }, payload) {
       try {
-        commit("ADD_HOSTSPOWERED", payload);
+        commit("ADD_HOSTSUP", payload);
+      } catch (error) {
+        commit("INSERT_ERROR", error);
+      }
+    },
+    addHostsPing({ commit }, payload) {
+      try {
+        commit("ADD_HOSTSPING", payload);
+      } catch (error) {
+        commit("INSERT_ERROR", error);
+      }
+    },
+    addHostsOn({ commit }, payload) {
+      try {
+        commit("ADD_HOSTSON", payload);
       } catch (error) {
         commit("INSERT_ERROR", error);
       }
@@ -818,9 +996,23 @@ export default new Vuex.Store({
         commit("INSERT_ERROR", error);
       }
     },
-    insertHostsResvPow({ commit }, payload) {
+    insertHostsResvUp({ commit }, payload) {
       try {
-        commit("INSERT_HOSTSRESVPOW", payload);
+        commit("INSERT_HOSTSRESVUP", payload);
+      } catch (error) {
+        commit("INSERT_ERROR", error);
+      }
+    },
+    insertHostsResvPing({ commit }, payload) {
+      try {
+        commit("INSERT_HOSTSRESVPING", payload);
+      } catch (error) {
+        commit("INSERT_ERROR", error);
+      }
+    },
+    insertHostsResvOn({ commit }, payload) {
+      try {
+        commit("INSERT_HOSTSRESVON", payload);
       } catch (error) {
         commit("INSERT_ERROR", error);
       }
@@ -846,6 +1038,20 @@ export default new Vuex.Store({
         commit("INSERT_ERROR", error);
       }
     },
+    insertHostsGrpResvPing({ commit }, payload) {
+      try {
+        commit("INSERT_HOSTSGRPRESVPING", payload);
+      } catch (error) {
+        commit("INSERT_ERROR", error);
+      }
+    },
+    insertHostsGrpResvOn({ commit }, payload) {
+      try {
+        commit("INSERT_HOSTSGRPRESVON", payload);
+      } catch (error) {
+        commit("INSERT_ERROR", error);
+      }
+    },
     insertHostsGrpResvDown({ commit }, payload) {
       try {
         commit("INSERT_HOSTSGRPRESVDOWN", payload);
@@ -867,6 +1073,20 @@ export default new Vuex.Store({
         commit("INSERT_ERROR", error);
       }
     },
+    insertHostsOtherResvPing({ commit }, payload) {
+      try {
+        commit("INSERT_HOSTSOTHERRESVPING", payload);
+      } catch (error) {
+        commit("INSERT_ERROR", error);
+      }
+    },
+    insertHostsOtherResvOn({ commit }, payload) {
+      try {
+        commit("INSERT_HOSTSOTHERRESVON", payload);
+      } catch (error) {
+        commit("INSERT_ERROR", error);
+      }
+    },
     insertHostsOtherResvDown({ commit }, payload) {
       try {
         commit("INSERT_HOSTSOTHERRESVDOWN", payload);
@@ -877,6 +1097,27 @@ export default new Vuex.Store({
     insertHostsOtherResvUnknown({ commit }, payload) {
       try {
         commit("INSERT_HOSTSOTHERRESVUNKOWN", payload);
+      } catch (error) {
+        commit("INSERT_ERROR", error);
+      }
+    },
+    insertHostsAvlPow({ commit }, payload) {
+      try {
+        commit("INSERT_HOSTSAVLPOW", payload);
+      } catch (error) {
+        commit("INSERT_ERROR", error);
+      }
+    },
+    insertHostsAvlPing({ commit }, payload) {
+      try {
+        commit("INSERT_HOSTSAVLPING", payload);
+      } catch (error) {
+        commit("INSERT_ERROR", error);
+      }
+    },
+    insertHostsAvlOn({ commit }, payload) {
+      try {
+        commit("INSERT_HOSTSAVLON", payload);
       } catch (error) {
         commit("INSERT_ERROR", error);
       }
@@ -895,16 +1136,23 @@ export default new Vuex.Store({
         commit("INSERT_ERROR", error);
       }
     },
-    insertHostsAvlPow({ commit }, payload) {
+    insertHostsRestrictedPow({ commit }, payload) {
       try {
-        commit("INSERT_HOSTSAVLPOW", payload);
+        commit("INSERT_HOSTSRESTRICTEDPOW", payload);
       } catch (error) {
         commit("INSERT_ERROR", error);
       }
     },
-    insertHostsRestrictedPow({ commit }, payload) {
+    insertHostsRestrictedPing({ commit }, payload) {
       try {
-        commit("INSERT_HOSTSRESTRICTEDPOW", payload);
+        commit("INSERT_HOSTSRESTRICTEDPING", payload);
+      } catch (error) {
+        commit("INSERT_ERROR", error);
+      }
+    },
+    insertHostsRestrictedOn({ commit }, payload) {
+      try {
+        commit("INSERT_HOSTSRESTRICTEDON", payload);
       } catch (error) {
         commit("INSERT_ERROR", error);
       }
@@ -923,6 +1171,27 @@ export default new Vuex.Store({
         commit("INSERT_ERROR", error);
       }
     },
+    insertHostsBlockedPow({ commit }, payload) {
+      try {
+        commit("INSERT_HOSTSBLOCKEDPOW", payload);
+      } catch (error) {
+        commit("INSERT_ERROR", error);
+      }
+    },
+    insertHostsBlockedPing({ commit }, payload) {
+      try {
+        commit("INSERT_HOSTSBLOCKEDPING", payload);
+      } catch (error) {
+        commit("INSERT_ERROR", error);
+      }
+    },
+    insertHostsBlockedOn({ commit }, payload) {
+      try {
+        commit("INSERT_HOSTSBLOCKEDON", payload);
+      } catch (error) {
+        commit("INSERT_ERROR", error);
+      }
+    },
     insertHostsBlockedDown({ commit }, payload) {
       try {
         commit("INSERT_HOSTSBLOCKEDDOWN", payload);
@@ -937,16 +1206,30 @@ export default new Vuex.Store({
         commit("INSERT_ERROR", error);
       }
     },
-    insertHostsBlockedPow({ commit }, payload) {
+    insertHostsBlocked({ commit }, payload) {
       try {
-        commit("INSERT_HOSTSBLOCKEDPOW", payload);
+        commit("INSERT_HOSTSBLOCKED", payload);
       } catch (error) {
         commit("INSERT_ERROR", error);
       }
     },
-    insertHostsBlocked({ commit }, payload) {
+    insertHostsInstErrPow({ commit }, payload) {
       try {
-        commit("INSERT_HOSTSBLOCKED", payload);
+        commit("INSERT_HOSTSINSTERRPOW", payload);
+      } catch (error) {
+        commit("INSERT_ERROR", error);
+      }
+    },
+    insertHostsInstErrPing({ commit }, payload) {
+      try {
+        commit("INSERT_HOSTSINSTERRPING", payload);
+      } catch (error) {
+        commit("INSERT_ERROR", error);
+      }
+    },
+    insertHostsInstErrOn({ commit }, payload) {
+      try {
+        commit("INSERT_HOSTSINSTERRON", payload);
       } catch (error) {
         commit("INSERT_ERROR", error);
       }
@@ -961,13 +1244,6 @@ export default new Vuex.Store({
     insertHostsInstErrUnknown({ commit }, payload) {
       try {
         commit("INSERT_HOSTSINSTERRUNKNOWN", payload);
-      } catch (error) {
-        commit("INSERT_ERROR", error);
-      }
-    },
-    insertHostsInstErrPow({ commit }, payload) {
-      try {
-        commit("INSERT_HOSTSINSTERRPOW", payload);
       } catch (error) {
         commit("INSERT_ERROR", error);
       }
@@ -1101,7 +1377,13 @@ export default new Vuex.Store({
 
     // Delete user reservation
     removeHostsResvPow({ commit }, payload) {
-      commit("REMOVE_HOSTSRESVPOW", payload);
+      commit("REMOVE_HOSTSRESVUP", payload);
+    },
+    removeHostsResvPing({ commit }, payload) {
+      commit("REMOVE_HOSTSRESVPING", payload);
+    },
+    removeHostsResvOn({ commit }, payload) {
+      commit("REMOVE_HOSTSRESVON", payload);
     },
     removeHostsResvDown({ commit }, payload) {
       commit("REMOVE_HOSTSRESVDOWN", payload);
@@ -1111,6 +1393,12 @@ export default new Vuex.Store({
     },
     removeHostsInstErrPow({ commit }, payload) {
       commit("REMOVE_HOSTSINSTERRPOW", payload);
+    },
+    removeHostsInstErrPing({ commit }, payload) {
+      commit("REMOVE_HOSTSINSTERRPING", payload);
+    },
+    removeHostsInstErrOn({ commit }, payload) {
+      commit("REMOVE_HOSTSINSTERRON", payload);
     },
     removeHostsInstErrDown({ commit }, payload) {
       commit("REMOVE_HOSTSINSTERRDOWN", payload);
@@ -1179,6 +1467,12 @@ export default new Vuex.Store({
     selectedPow({ commit }, payload) {
       commit("SELECTED_POW", payload);
     },
+    selectedPing({ commit }, payload) {
+      commit("SELECTED_PING", payload);
+    },
+    selectedOn({ commit }, payload) {
+      commit("SELECTED_ON", payload);
+    },
     selectedDown({ commit }, payload) {
       commit("SELECTED_DOWN", payload);
     },
@@ -1239,6 +1533,12 @@ export default new Vuex.Store({
     // Add New reservations
     removeHostsAvlPow({ commit }, payload) {
       commit("REMOVE_HOSTSAVLPOW", payload);
+    },
+    removeHostsAvlPing({ commit }, payload) {
+      commit("REMOVE_HOSTSAVLPING", payload);
+    },
+    removeHostsAvlOn({ commit }, payload) {
+      commit("REMOVE_HOSTSAVLON", payload);
     },
     removeHostsAvlDown({ commit }, payload) {
       commit("REMOVE_HOSTSAVLDOWN", payload);
@@ -1305,8 +1605,14 @@ export default new Vuex.Store({
     clusterPrefix(state) {
       return state.clusterPrefix;
     },
-    hostsPowered(state) {
-      return state.hostsPowered;
+    hostsUp(state) {
+      return state.hostsUp;
+    },
+    hostsPing(state) {
+      return state.hostsPing;
+    },
+    hostsOn(state) {
+      return state.hostsOn;
     },
     hostsDown(state) {
       return state.hostsDown;
@@ -1320,8 +1626,14 @@ export default new Vuex.Store({
     hostsOtherReserved(state) {
       return state.hostsOtherReserved;
     },
-    hostsResvPow(state) {
-      return state.hostsResvPow;
+    hostsResvUp(state) {
+      return state.hostsResvUp;
+    },
+    hostsResvPing(state) {
+      return state.hostsResvPing;
+    },
+    hostsResvOn(state) {
+      return state.hostsResvOn;
     },
     hostsResvDown(state) {
       return state.hostsResvDown;
@@ -1332,6 +1644,12 @@ export default new Vuex.Store({
     hostsOtherResvPow(state) {
       return state.hostsOtherResvPow;
     },
+    hostsOtherResvPing(state) {
+      return state.hostsOtherResvPing;
+    },
+    hostsOtherResvOn(state) {
+      return state.hostsOtherResvOn;
+    },
     hostsOtherResvDown(state) {
       return state.hostsOtherResvDown;
     },
@@ -1340,6 +1658,12 @@ export default new Vuex.Store({
     },
     hostsGrpResvPow(state) {
       return state.hostsGrpResvPow;
+    },
+    hostsGrpResvPing(state) {
+      return state.hostsGrpResvPing;
+    },
+    hostsGrpResvOn(state) {
+      return state.hostsGrpResvOn;
     },
     hostsGrpResvDown(state) {
       return state.hostsGrpResvDown;
@@ -1350,14 +1674,23 @@ export default new Vuex.Store({
     hostsAvlPow(state) {
       return state.hostsAvlPow;
     },
+    hostsAvlPing(state) {
+      return state.hostsAvlPing;
+    },
+    hostsAvlOn(state) {
+      return state.hostsAvlOn;
+    },
     hostsAvlDown(state) {
       return state.hostsAvlDown;
     },
     hostsAvlUnknown(state) {
       return state.hostsAvlUnknown;
     },
-    hostsRestrictedPow(state) {
-      return state.hostsRestrictedPow;
+    hostsRestrictedPing(state) {
+      return state.hostsRestrictedPing;
+    },
+    hostsRestrictedOn(state) {
+      return state.hostsRestrictedOn;
     },
     hostsRestrictedDown(state) {
       return state.hostsRestrictedDown;
@@ -1367,6 +1700,12 @@ export default new Vuex.Store({
     },
     hostsBlockedPow(state) {
       return state.hostsBlockedPow;
+    },
+    hostsBlockedPing(state) {
+      return state.hostsBlockedPing;
+    },
+    hostsBlockedOn(state) {
+      return state.hostsBlockedOn;
     },
     hostsBlockedDown(state) {
       return state.hostsBlockedDown;
@@ -1379,6 +1718,12 @@ export default new Vuex.Store({
     },
     hostsInstErrPow(state) {
       return state.hostsInstErrPow;
+    },
+    hostsInstErrPing(state) {
+      return state.hostsInstErrPing;
+    },
+    hostsInstErrOn(state) {
+      return state.hostsInstErrOn;
     },
     hostsInstErrDown(state) {
       return state.hostsInstErrDown;
@@ -1403,6 +1748,12 @@ export default new Vuex.Store({
     },
     hostSelectedPow(state){
       return state.hostSelectedPow;
+    },
+    hostSelectedPing(state){
+      return state.hostSelectedPing;
+    },
+    hostSelectedOn(state){
+      return state.hostSelectedOn;
     },
     hostSelectedDown(state){
       return state.hostSelectedDown;
@@ -1438,7 +1789,7 @@ export default new Vuex.Store({
       return state.ownerGroupNames;
     },
     memberGroupNames(state) {
-      return state.ownerGroupNames;
+      return state.memberGroupNames;
     },
     userReservations(state) {
       return state.userReservations;

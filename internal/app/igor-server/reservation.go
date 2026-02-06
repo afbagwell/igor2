@@ -50,7 +50,7 @@ func filterReservationList(resList []Reservation, user *User) []common.Reservati
 
 	var reportList []common.ReservationData
 
-	refreshPowerChan <- struct{}{}
+	refreshStatusChan <- struct{}{}
 
 	for _, r := range resList {
 
@@ -70,33 +70,39 @@ func filterReservationList(resList []Reservation, user *User) []common.Reservati
 		hostRange, _ := igor.ClusterRefs[0].UnsplitRange(hostNameList)
 
 		resHostData := filterHostList(r.Hosts, nil, user)
-		var resDownNodes = make([]string, 0, len(r.Hosts))
+		var resOffNodes = make([]string, 0, len(r.Hosts))
+		var resOnNodes = make([]string, 0, len(r.Hosts))
+		var resPingNodes = make([]string, 0, len(r.Hosts))
 		var resPowerNaNodes = make([]string, 0, len(r.Hosts))
 		var resUpNodes = make([]string, 0, len(r.Hosts))
 
 		for _, h := range hostNameList {
-			var isDownOrUnknown = false
 			for _, d := range resHostData {
 				if h == d.Name {
-					if d.Powered == "false" {
-						resDownNodes = append(resDownNodes, h)
-						isDownOrUnknown = true
+					if d.Powered == "off" {
+						resOffNodes = append(resOffNodes, h)
+						break
+					} else if d.Powered == "up" {
+						resUpNodes = append(resUpNodes, h)
+						break
+					} else if d.Powered == "on" {
+						resOnNodes = append(resOnNodes, h)
+						break
+					} else if d.Powered == "ping" {
+						resPingNodes = append(resPingNodes, h)
 						break
 					} else if d.Powered == "unknown" {
-						resDownNodes = append(resPowerNaNodes, h)
-						isDownOrUnknown = true
+						resPowerNaNodes = append(resPowerNaNodes, h)
 						break
 					}
 				}
 			}
-
-			if !isDownOrUnknown {
-				resUpNodes = append(resUpNodes, h)
-			}
 		}
 
 		hostsUp, _ := igor.ClusterRefs[0].UnsplitRange(resUpNodes)
-		hostsDown, _ := igor.ClusterRefs[0].UnsplitRange(resDownNodes)
+		hostsPing, _ := igor.ClusterRefs[0].UnsplitRange(resPingNodes)
+		hostsOn, _ := igor.ClusterRefs[0].UnsplitRange(resOnNodes)
+		hostsDown, _ := igor.ClusterRefs[0].UnsplitRange(resOffNodes)
 		hostsUnknown, _ := igor.ClusterRefs[0].UnsplitRange(resPowerNaNodes)
 
 		resCopy := common.ReservationData{
@@ -115,7 +121,9 @@ func filterReservationList(resList []Reservation, user *User) []common.Reservati
 			Hosts:        hostNameList,
 			HostRange:    hostRange,
 			HostsUp:      hostsUp,
-			HostsDown:    hostsDown,
+			HostsPing:    hostsPing,
+			HostsOn:      hostsOn,
+			HostsOff:     hostsDown,
 			HostsPowerNA: hostsUnknown,
 			Vlan:         r.Vlan,
 			RemainHours:  int(remaining),

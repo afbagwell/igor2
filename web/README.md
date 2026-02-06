@@ -6,9 +6,11 @@ npm install
 ```
 
 ### Compiles and hot-reloads for development
+
 ```
-npm run serve
+NODE_TLS_REJECT_UNAUTHORIZED=0 npm run serve
 ```
+_The added parameter before the **npm** command instructs the web app to ignore self-signed cert errors. Leave this off if you are running a dev build with a real certificate._
 
 ### Compiles and minifies for production
 ```

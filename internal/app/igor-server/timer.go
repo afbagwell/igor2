@@ -17,7 +17,12 @@ type ScheduleTimer struct {
 }
 
 func (st *ScheduleTimer) reset() {
-	st.t.Reset(st.calcDur(st.off))
+	d := st.calcDur(st.off)
+	if d <= 0 {
+		// Fallback: never let this become a spin loop
+		d = 5 * time.Second
+	}
+	st.t.Reset(d)
 }
 
 // NewScheduleTimer creates a new ScheduleTimer that fires at the top of every minute plus the offset provided
@@ -43,7 +48,15 @@ func NewScheduleTimer(offset time.Duration) ScheduleTimer {
 // one minute if used in a ScheduleTimer, otherwise the timer with loop infinitely.
 func getDurationToClockTime(offset time.Duration) time.Duration {
 	now := time.Now()
-	nextInterval :=
-		time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), 0, 0, time.Local).Add(offset)
+	base := time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), 0, 0, time.Local)
+	nextInterval := base.Add(offset)
+
+	// If DST just fell back, nextInterval can land in the "first" copy of this
+	// wall-clock minute (still in DST), which is now in the past.
+	if !nextInterval.After(now) {
+		// Move to the same offset in the *next* hour.
+		nextInterval = nextInterval.Add(time.Hour)
+	}
+
 	return time.Until(nextInterval)
 }

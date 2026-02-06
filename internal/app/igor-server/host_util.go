@@ -18,7 +18,7 @@ func getReservedHosts() ([]Host, error) {
 	if err != nil {
 		return result, err
 	}
-	hostNames := []string{}
+	hostNames := make([]string, len(reservations), len(reservations)*2)
 	for _, reservation := range reservations {
 		for _, host := range reservation.Hosts {
 			hostNames = append(hostNames, host.Name)

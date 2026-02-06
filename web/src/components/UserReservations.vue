@@ -746,10 +746,7 @@ export default {
       const index = this.userReservations.findIndex(
         (reservation) => reservation.name === id
       );
-      if (~index) {
-        return true;
-      }
-      return false;
+      return !!(~index);
     },
 
     // Methods for deleting reservation
@@ -791,8 +788,8 @@ export default {
       let reservation = this.$store.getters.userReservations[index];
       let hosts = reservation.hosts;
       hosts.forEach((element) => {
-        if (this.$store.getters.hostsResvPow.includes(element)) {
-          let i = this.$store.getters.hostsResvPow.findIndex(
+        if (this.$store.getters.hostsResvUp.includes(element)) {
+          let i = this.$store.getters.hostsResvUp.findIndex(
             (host) => host === element
           );
           let payload = {
@@ -800,9 +797,27 @@ export default {
             value: element,
           };
           this.$store.dispatch("removeHostsResvPow", payload);
+        } else if (this.$store.getters.hostsResvPing.includes(element)) {
+          let i = this.$store.getters.hostsResvPing.findIndex(
+            (host) => host === element
+          );
+          let payload = {
+            key: i,
+            value: element,
+          };
+          this.$store.dispatch("removeHostsResvPing", payload);
+        } else if (this.$store.getters.hostsResvOn.includes(element)) {
+          let i = this.$store.getters.hostsResvOn.findIndex(
+              (host) => host === element
+          );
+          let payload = {
+            key: i,
+            value: element,
+          };
+          this.$store.dispatch("removeHostsResvOn", payload);
         } else if (this.$store.getters.hostsResvDown.includes(element)) {
           let i = this.$store.getters.hostsResvDown.findIndex(
-            (host) => host === element
+              (host) => host === element
           );
           let payload = {
             key: i,
@@ -836,6 +851,24 @@ export default {
             value: element,
           };
           this.$store.dispatch("removeHostsInstErrDown", payload);
+        } else if (this.$store.getters.hostsInstErrPing.includes(element)) {
+          let i = this.$store.getters.hostsInstErrPing.findIndex(
+              (host) => host === element
+          );
+          let payload = {
+            key: i,
+            value: element,
+          };
+          this.$store.dispatch("removeHostsInstErrPing", payload);
+        } else if (this.$store.getters.hostsInstErrOn.includes(element)) {
+          let i = this.$store.getters.hostsInstErrOn.findIndex(
+              (host) => host === element
+          );
+          let payload = {
+            key: i,
+            value: element,
+          };
+          this.$store.dispatch("removeHostsInstErrOn", payload);
         } else if (this.$store.getters.hostsInstErrUnknown.includes(element)) {
           let i = this.$store.getters.hostsInstErrUnknown.findIndex(
             (host) => host === element
@@ -1155,7 +1188,7 @@ export default {
             };
             this.$store.dispatch("saveHostRange", payload);
           }
-          const indexAsc = this.$store.getters.asociatedReservations.findIndex(
+          const indexAsc = this.$store.getters.associatedReservations.findIndex(
             (reservation) => reservation.name === id
           ); // find the reservation index
           if (~indexAsc) {
@@ -1187,8 +1220,8 @@ export default {
     updateRemovedHost(hosts) {
       // Free the Hosts when hosts are removed from reservations
       hosts.forEach((element) => {
-        if (this.$store.getters.hostsResvPow.includes(element)) {
-          let i = this.$store.getters.hostsResvPow.findIndex(
+        if (this.$store.getters.hostsResvUp.includes(element)) {
+          let i = this.$store.getters.hostsResvUp.findIndex(
             (host) => host === element
           );
           let payload = {
@@ -1196,6 +1229,24 @@ export default {
             value: element,
           };
           this.$store.dispatch("removeHostsResvPow", payload);
+        } else if (this.$store.getters.hostsResvPing.includes(element)) {
+          let i = this.$store.getters.hostsResvPing.findIndex(
+              (host) => host === element
+          );
+          let payload = {
+            key: i,
+            value: element,
+          };
+          this.$store.dispatch("removeHostsResvPing", payload);
+        } else if (this.$store.getters.hostsResvOn.includes(element)) {
+          let i = this.$store.getters.hostsResvOn.findIndex(
+              (host) => host === element
+          );
+          let payload = {
+            key: i,
+            value: element,
+          };
+          this.$store.dispatch("removeHostsResvOn", payload);
         } else if (this.$store.getters.hostsResvDown.includes(element)) {
           let i = this.$store.getters.hostsResvDown.findIndex(
             (host) => host === element
@@ -1223,6 +1274,24 @@ export default {
             value: element,
           };
           this.$store.dispatch("removeHostsInstErrPow", payload);
+        } else if (this.$store.getters.hostsInstErrPing.includes(element)) {
+          let i = this.$store.getters.hostsInstErrPing.findIndex(
+              (host) => host === element
+          );
+          let payload = {
+            key: i,
+            value: element,
+          };
+          this.$store.dispatch("removeHostsInstErrPing", payload);
+        } else if (this.$store.getters.hostsInstErrOn.includes(element)) {
+          let i = this.$store.getters.hostsInstErrOn.findIndex(
+              (host) => host === element
+          );
+          let payload = {
+            key: i,
+            value: element,
+          };
+          this.$store.dispatch("removeHostsInstErrOn", payload);
         } else if (this.$store.getters.hostsInstErrDown.includes(element)) {
           let i = this.$store.getters.hostsInstErrDown.findIndex(
             (host) => host === element
@@ -1232,7 +1301,7 @@ export default {
             value: element,
           };
           this.$store.dispatch("removeHostsInstErrDown", payload);
-        } else if (this.$store.getters.hostsInstErrUnknown.includes(element)) {
+        }  else if (this.$store.getters.hostsInstErrUnknown.includes(element)) {
           let i = this.$store.getters.hostsInstErrUnknown.findIndex(
             (host) => host === element
           );
@@ -1319,7 +1388,7 @@ export default {
     },
     getExtendDateTime() {
       let d = "";
-      if (this.extendResv.extDate != "") {
+      if (this.extendResv.extDate !== "") {
         d = this.extendResv.extDate;
       } else {
         const today = new Date();
@@ -1331,7 +1400,7 @@ export default {
           today.getDate();
       }
       let t = "";
-      if (this.extendResv.extTime != "") {
+      if (this.extendResv.extTime !== "") {
         t = this.extendResv.extTime;
       } else {
         let today = new Date();

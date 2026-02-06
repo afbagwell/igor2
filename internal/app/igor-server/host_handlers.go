@@ -47,7 +47,7 @@ func handleReadHosts(w http.ResponseWriter, r *http.Request) {
 		if len(hostList) == 0 {
 			rb.Message = "search returned no results"
 		} else {
-			refreshPowerChan <- struct{}{}
+			refreshStatusChan <- struct{}{}
 			hostDetails = filterHostList(hostList, filterPowered, getUserFromContext(r))
 		}
 		rb.Data["hosts"] = hostDetails

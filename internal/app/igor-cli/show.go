@@ -27,7 +27,9 @@ import (
 
 const (
 	Up         = "UP"
-	Down       = "DOWN"
+	Off        = "OFF"
+	On         = "ON"
+	Ping       = "PING"
 	PowerNA    = "POWER-N/A"
 	Blocked    = "BLOCKED"
 	Reserved   = "RESERVED"
@@ -49,9 +51,10 @@ Displays cluster node statuses and reservation list.
 
 Node Power Status (text color):
 
-  ` + cUnreservedUp.Sprint("UP") + `   : power is on
-  ` + cUnreservedDown.Sprint(Down) + ` : power is off
-  ` + cUnreservedPowerNA.Sprint("N/A") + `  : power status not available
+  ` + cUnreservedUp.Sprint("UP") + `   : node is up
+  ` + pPing.Sprint("PING") + ` : node is ping-able; no TCP
+  ` + pOn.Sprint("ON") + `   : node has power only
+  ` + pOff.Sprint("OFF") + `  : node power is off
 
 Node Reservation Status (background color):
 
@@ -64,13 +67,30 @@ Node Reservation Status (background color):
   ` + cOtherRes.Sprint("RESERVED") + `    : node reserved by another user
   ` + cFuture.Sprint("FUTURE") + `      : future reservation (only used on reservation table)
 
-The node map displays current-time status only.
+` + sBold("STATUS NOTES:") + `
 
-Color output will be auto-disabled if the terminal lacks color support.
+The two end-point node statuses are "OFF" and "UP", denoting either the node
+chassis has no power, or that the node responds to TCP-alive requests on ports
+that should allow external connections under normal operating conditions 
+(ssh/22, HTTPS/443, etc.) The two other status labels are situational.
+
+"ON" simply means the node chassis has power and is therefore likely to be
+fetching the PXE designated OS or boot is in-progress. Therefore "ON" usually
+transitions to a higher state after some time.
+
+"PING" indicates the node's IP layer will respond to a ping. This may be the
+final state for some kinds of nodes that are controlled via distros that setup
+networking services. If a node has disabled or blocked ping requests, this
+status is not available.
+
+If a node remains stuck at the "ON" or "PING" status level for an extended
+period instead of transitioning to "UP", it is advised to ask an admin to help
+troubleshoot any potential problems.
 
 ` + sBold("NODE MAP TABLE:") + `
 
-A summary view of power and availability of each host in the cluster.
+A summary view of status and availability of each host in the cluster. The node
+map displays current-time status only.
 
 ` + sBold("NODE STATUS TABLE:") + `
 
@@ -98,7 +118,9 @@ and is especially useful in combination with the -x flag.
 ` + sBold("ADDITIONAL INFORMATION:") + `
 
 The server's local time will be displayed for reference purposes.
-An optional "message of the day" can also appear to provide user alerts and info. 
+An optional "message of the day" can also appear to provide user alerts and info.
+
+Color output will be auto-disabled if the terminal lacks color support.
 
 For more details, run the show command for specific subgroups.
 Ex. 'igor res show', 'igor host show'
@@ -636,27 +658,31 @@ func printShow(rb *common.ResponseBodyShow, flagset *pflag.FlagSet) {
 		if resStart.After(igorCliNow) {
 			hostStatus = cFutureNodes.Sprint(r.HostRange)
 		} else {
-			if len(r.HostsDown) == 0 && len(r.HostsPowerNA) == 0 {
-				hostStatus = cOK.Sprintf(Up) + " " + r.HostRange
-			} else if len(r.HostsUp) == 0 && len(r.HostsPowerNA) == 0 {
-				hostStatus = cAlert.Sprintf(Down) + " " + r.HostsDown
-			} else if len(r.HostsUp) == 0 && len(r.HostsDown) == 0 {
-				hostStatus = cWarning.Sprintf(PowerNA) + " " + r.HostsPowerNA
-			} else {
 
-				var up, down, na string
-				if len(r.HostsUp) > 0 {
-					up = fmt.Sprintf(" %s %s /", cOK.Sprintf(Up), r.HostsUp)
-				}
-				if len(r.HostsPowerNA) > 0 {
-					na = fmt.Sprintf(" %s %s /", cWarning.Sprintf(PowerNA), r.HostsPowerNA)
-				}
-				if len(r.HostsDown) > 0 {
-					down = fmt.Sprintf(" %s %s /", cAlert.Sprintf(Down), r.HostsDown)
-				}
-
-				hostStatus = strings.TrimSuffix(fmt.Sprintf("%s -%s%s%s", r.HostRange, up, na, down), " /")
+			type statusDef struct {
+				label string
+				hosts string
+				fmtFn func(format string, a ...interface{}) string
 			}
+			statuses := []statusDef{
+				{Up, r.HostsUp, pUp.Sprintf},
+				{Ping, r.HostsPing, pPing.Sprintf},
+				{On, r.HostsOn, pOn.Sprintf},
+				{Off, r.HostsOff, pOff.Sprintf},
+				{PowerNA, r.HostsPowerNA, cWarning.Sprintf},
+			}
+
+			var parts []string
+			for _, s := range statuses {
+				if len(s.hosts) == 0 {
+					continue
+				}
+				parts = append(parts, fmt.Sprintf("%s %s", s.fmtFn(s.label), s.hosts))
+			}
+
+			joined := strings.Join(parts, " / ")
+
+			hostStatus = fmt.Sprintf("%s - %s", r.HostRange, joined)
 
 			var blockedLabel = fmt.Sprintf(" / %s ", cBlockedUp.Sprintf(Blocked))
 			var blockedHosts []string
@@ -759,11 +785,15 @@ func printNodeMap(cData common.ClusterData, hData []common.HostData, rData []com
 				// this is the host sequence id
 				seqID := hDataKeys[n]
 
-				// color the numbers based on node power status
-				if hDataMap[seqID].Powered == "true" {
+				// color the numbers based on node network status
+				if hDataMap[seqID].Powered == "up" {
 					colorNode.SetFg(FgUp)
-				} else if hDataMap[seqID].Powered == "false" {
-					colorNode.SetFg(FgDown).AddOpts(color.Bold)
+				} else if hDataMap[seqID].Powered == "off" {
+					colorNode.SetFg(FgPowerOff).AddOpts(color.Bold)
+				} else if hDataMap[seqID].Powered == "on" {
+					colorNode.SetFg(FgPowered).AddOpts(color.Bold)
+				} else if hDataMap[seqID].Powered == "ping" {
+					colorNode.SetFg(FgPingable).AddOpts(color.Bold)
 				} else {
 					colorNode.SetFg(FgPowerNA).AddOpts(color.Bold)
 				}

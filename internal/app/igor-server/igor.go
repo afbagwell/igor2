@@ -30,7 +30,9 @@ type Igor struct {
 	KickstartDir     string
 	ElevateMap       *common.PassiveTtlMap
 	ClusterRefs      []common.Range
-	IPowerStatus
+	PortProbe        IHostProbe
+	PingProbe        IHostProbe
+	PowerProbe       IHostProbe
 }
 
 func (i *Igor) getServerConfig() interface{} {

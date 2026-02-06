@@ -24,12 +24,13 @@ import (
 // Global Variables
 var (
 	wg sync.WaitGroup
-	// buffered notification channel used for sending out emails to users
-	resNotifyChan    = make(chan ResNotifyEvent, 100)
-	acctNotifyChan   = make(chan AcctNotifyEvent, 100)
-	groupNotifyChan  = make(chan GroupNotifyEvent, 100)
-	refreshPowerChan = make(chan struct{}, 250)
-	shutdownChan     = make(chan struct{})
+
+	resNotifyChan     = make(chan ResNotifyEvent, 100)
+	acctNotifyChan    = make(chan AcctNotifyEvent, 100)
+	groupNotifyChan   = make(chan GroupNotifyEvent, 100)
+	refreshStatusChan = make(chan struct{}, 250)
+	clusterUpdateChan = make(chan struct{})
+	shutdownChan      = make(chan struct{})
 
 	// initrdQueue is used to queue and process initrd jobs
 	initrdQueue *InitrdJobQueue

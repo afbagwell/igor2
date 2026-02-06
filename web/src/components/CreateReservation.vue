@@ -66,7 +66,7 @@
                 placeholder=""
                 min="0"
                 class="form-control"
-                :disabled="hostAllowSelect == true"
+                :disabled="hostAllowSelect === true"
               ></b-form-input>
               
             </b-form-group>
@@ -112,7 +112,7 @@
                 v-model.lazy="hostsFromGrid"
                 class="form-control"
                 v-if="!nodeListText"
-                :disabled="hostAllowSelect == false"
+                :disabled="hostAllowSelect === false"
               >
               </b-form-textarea>
             </b-form-group>
@@ -224,10 +224,10 @@
               class="form-group col-sm-6"
             >
               <b-form-select
-                id="grpname"
-                v-model="form.grpname"
-                :options="groupNames"
-                class="form-control"
+                  id="grpname"
+                  v-model="form.grpname"
+                  :options="groupNameOptions"
+                  class="form-control"
               ></b-form-select>
             </b-form-group>
             </b-col>
@@ -429,6 +429,15 @@ export default {
       });
       return reservationNames;
     },
+    groupNameOptions() {
+      const names = this.groupNames || [];
+      const normalized = names.map((g) =>
+          typeof g === "string" ? { value: g, text: g } : g
+      );
+
+      // Always-available “no group” first option
+      return [{ value: "", text: "(no group)" }, ...normalized];
+    },
     vlanMin() {
       return this.$store.getters.vlanMin;
     },
@@ -440,7 +449,7 @@ export default {
     },
     hostsFromGrid: {
       get () {
-        if(this.$store.getters.selectedHosts != []) {
+        if(this.$store.getters.selectedHosts !== []) {
           return this.$store.getters.selectedHosts.join();
         }
         else {
@@ -448,14 +457,14 @@ export default {
         }
       },
       set (value) {
-        if(value != "") {
+        if(value !== "") {
           if(value.includes(",")) {
             this.$store.dispatch('selectedResvHosts', value.split(","));
           }
           else if(value.includes("-")) {
             if(value.includes("]")){
-              let parseHostList = value.substr(value.indexOf("[")+1);
-              let hostRange = parseHostList.substr(0, parseHostList.indexOf("]"));
+              let parseHostList = value.slice(value.indexOf("[")+1);
+              let hostRange = parseHostList.slice(0, parseHostList.indexOf("]"));
               let prefix = this.$store.getters.clusterPrefix;
               let str = hostRange.split("-");
               let hostList = [];
@@ -476,7 +485,7 @@ export default {
     },
     nodeCountFromGrid: {
       get () {
-        if(this.$store.getters.selectedHosts.length != 0){
+        if(this.$store.getters.selectedHosts.length !== 0){
           return this.$store.getters.selectedHosts.length;
         }
         else {
@@ -484,7 +493,7 @@ export default {
         }
       },
       set (value) {
-        if(this.$store.getters.selectedHosts.length != 0){
+        if(this.$store.getters.selectedHosts.length !== 0){
           this.$store.dispatch('selectedResvHostsCount', this.$store.getters.selectedHosts.length);
         }
         else {
@@ -493,12 +502,7 @@ export default {
       }
     },    
     hostsFromGridSelected() {
-      if(this.$store.getters.selectedHosts != []) {
-        return true;
-      }
-      else {
-        return false;
-      }
+      return this.$store.getters.selectedHosts !== [];
     },
   },
   mounted() {
@@ -523,7 +527,7 @@ export default {
                         .format('MM/DD/YY hh:mm');
     },
     vlanToggle() {
-      if (this.vlanChecked == true) {
+      if (this.vlanChecked === true) {
         this.vlanValue = true;
         this.form.vlan = "";
         this.form.vlanVal = "";
@@ -535,7 +539,7 @@ export default {
     },
 
     dateTimeToggle() {
-      if (this.dateTimeChecked == true) {
+      if (this.dateTimeChecked === true) {
         this.dateTimeText = true;
         this.form.startDate = "";
         this.form.startTime = "";
@@ -551,7 +555,7 @@ export default {
     },
 
     endDateTimeToggle() {
-      if (this.endDateTimeChecked == true) {
+      if (this.endDateTimeChecked === true) {
         this.endDateTimeText = true;
         this.form.endDate = "";
         this.form.endTime = "";
@@ -567,15 +571,11 @@ export default {
     },
 
     enableHostSelect() {
-      if (this.hostSelect == true) {
-        this.hostAllowSelect = true;
-      } else {
-        this.hostAllowSelect = false;
-      }
+      this.hostAllowSelect = this.hostSelect === true;
     },
 
     nodeListToggle() {
-      if (this.nodeListChecked == true) {
+      if (this.nodeListChecked === true) {
         this.nodeListText = true;
         this.form.nodeList = [];
         this.form.nodeListTextValue = "";
@@ -589,21 +589,17 @@ export default {
     },
 
     showForm() {
-      if (this.imageSelected == true) {
-        return true;
-      } else {
-        return false;
-      }
+      return this.imageSelected === true;
     },
 
     getStartTime() {
-      if (this.form.startDate == "") {
-        if (this.form.startTime == "") {
+      if (this.form.startDate === "") {
+        if (this.form.startTime === "") {
           this.form.start = "";
         }
       } else {
         let d = "";
-        if (this.form.startDate != "") {
+        if (this.form.startDate !== "") {
           d = this.form.startDate;
         } else {
           const today = new Date();
@@ -615,7 +611,7 @@ export default {
             today.getDate();
         }
         let t = "";
-        if (this.form.startTime != "") {
+        if (this.form.startTime !== "") {
           t = this.form.startTime;
         } else {
           let today = new Date();
@@ -628,13 +624,13 @@ export default {
     },
 
     getEndTime() {
-      if (this.form.endDate == "") {
-        if (this.form.endTime == "") {
+      if (this.form.endDate === "") {
+        if (this.form.endTime === "") {
           this.form.end = "";
         }
       } else {
         let d = "";
-        if (this.form.endDate != "") {
+        if (this.form.endDate !== "") {
           d = this.form.endDate;
         } else {
           const today = new Date();
@@ -646,7 +642,7 @@ export default {
             today.getDate();
         }
         let t = "";
-        if (this.form.endTime != "") {
+        if (this.form.endTime !== "") {
           t = this.form.endTime;
         } else {
           let today = new Date();
@@ -660,7 +656,7 @@ export default {
 
     getPayload() {
       let vlan = "";
-      if(this.form.vlanVal != ""){
+      if(this.form.vlanVal !== ""){
         vlan = this.form.vlanVal;
       }
       else{
@@ -675,7 +671,7 @@ export default {
         nodeList: this.form.nodes,
         start: this.form.startDT,
         vlan: vlan,
-        group: this.form.grpname,
+        group: this.form.grpname || "",
         description: this.form.description,
         noCycle: this.noCycle,
       };
@@ -691,15 +687,15 @@ export default {
       if (!this.form.endDT) {
         this.$delete(payload, "duration");
       }
-      if (this.form.nodeCount == 0) {
-        if (this.form.nodes != "") {
+      if (this.form.nodeCount === 0) {
+        if (this.form.nodes !== "") {
           this.$delete(payload, "nodeCount");
         } else {
           this.validateFlag = false;
           alert("Either Node List or Node Count is required!");
         }
-      } else if (this.form.nodeCount != 0) {
-        if (this.form.nodes != "") {
+      } else if (this.form.nodeCount !== 0) {
+        if (this.form.nodes !== "") {
           if(!this.selectedHosts){
             this.validateFlag = false;
             alert("You can ony enter either Node List or Node Count at a time!");
@@ -713,7 +709,7 @@ export default {
         }
       }
       if (this.form.nodes === "") {
-        if (this.form.nodeCount != 0) {
+        if (this.form.nodeCount !== 0) {
           this.$delete(payload, "nodeList");
         }
       }
@@ -734,7 +730,7 @@ export default {
     },
 
     getNodes() {
-      if (this.nodeListText == true) {
+      if (this.nodeListText === true) {
         this.form.nodes = this.form.nodeList.toString();
       } else {
         this.form.nodes = this.form.nodeListTextValue;
@@ -742,7 +738,7 @@ export default {
     },
 
     getStartDateOption() {
-      if (this.dateTimeText == true) {
+      if (this.dateTimeText === true) {
         this.form.startDT = this.form.start;
       } else {
         let dt = moment(String(this.form.dateTimeTextValue));
@@ -751,7 +747,7 @@ export default {
     },
 
     getEndDateOption() {
-      if (this.endDateTimeText == true) {
+      if (this.endDateTimeText === true) {
         this.form.endDT = this.form.end;
       } else {
         let dt = moment(this.form.endDateTimeTextValue);
@@ -786,7 +782,7 @@ export default {
             this.$store.dispatch("insertNewReservations", payload);
             this.$store.dispatch("insertNewUserReservations", payload);
             this.updateProfile();
-            alert("Reservation submitted sucessfully!");
+            alert("Reservation submitted successfully!");
           })
           .catch(function(error) {
             alert("Error: " + error.response.data.message);
@@ -940,10 +936,10 @@ export default {
     },
 
     selectedProfileDistro(){
-      if(this.form.reservation == "eDistro"){
+      if(this.form.reservation === "eDistro"){
         this.form.eDistroName = this.form.eDistroProfileName;
       }
-      else if(this.form.reservation == "eProfile"){
+      else if(this.form.reservation === "eProfile"){
         this.form.eProfileName = this.form.eDistroProfileName;  
       }
     },

@@ -56,7 +56,7 @@ Output will provide the host name, network info and assigned reservations.
 In the formatted table output, powered states are designated with symbols:
 
  ` + pUp.Sprintf("●") + ` : node is up
- ` + pDown.Sprintf("●") + ` : node is down
+ ` + pOff.Sprintf("●") + ` : node is down
  ` + pUnknown.Sprintf("●") + ` : node power status unavailable
 
 The HOSTNAME column will repeat the NODE column unless a different hostname
@@ -537,7 +537,7 @@ func printHosts(rb *common.ResponseBodyHosts) {
 		return hosts[i].SequenceID < hosts[j].SequenceID
 	})
 
-	stateColor := func(state string) string {
+	resStateColor := func(state string) string {
 		switch state {
 		case "available":
 			return hsAvailable.Sprint(state)
@@ -550,27 +550,31 @@ func printHosts(rb *common.ResponseBodyHosts) {
 		}
 	}
 
-	powerColor := func(powered string) string {
+	netStateColor := func(powered string) string {
 		if simplePrint {
 			return powered
 		}
-		if powered == "true" {
+		if powered == "up" {
 			return pUp.Sprintf("●")
-		} else if powered == "false" {
-			return pDown.Sprintf("●")
+		} else if powered == "off" {
+			return pOff.Sprintf("●")
+		} else if powered == "on" {
+			return pOn.Sprintf("●")
+		} else if powered == "ping" {
+			return pPing.Sprintf("●")
 		} else {
 			return pUnknown.Sprintf("●")
 		}
 	}
 
 	tw := table.NewWriter()
-	tw.AppendHeader(table.Row{"NODE", "STATE", "POWER", "BOOT-TYPE", "MACID", "HOSTNAME", "IP", "ETH", "POLICY", "ACCESS-GROUPS", "RESTRICTED", "RESERVATIONS"})
+	tw.AppendHeader(table.Row{"NODE", "RES-STATE", "NET-STATE", "BOOT-TYPE", "MACID", "HOSTNAME", "IP", "ETH", "POLICY", "ACCESS-GROUPS", "RESTRICTED", "RESERVATIONS"})
 
 	for _, h := range hosts {
 		tw.AppendRow([]interface{}{
 			sBold(h.Name),
-			stateColor(h.State),
-			powerColor(h.Powered),
+			resStateColor(h.State),
+			netStateColor(h.Powered),
 			h.BootMode,
 			h.Mac,
 			h.HostName,

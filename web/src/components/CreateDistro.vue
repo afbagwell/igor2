@@ -325,11 +325,7 @@ export default {
       }
     },
     showForm() {
-      if (this.distroType === true) {
-        return true;
-      } else {
-        return false;
-      }
+      return this.distroType === true;
     },
 
     getPayload() {
@@ -347,7 +343,7 @@ export default {
         form_data.append("initrdFile", this.form.initrdFile);
       }
       if (this.form.grpname != null) {
-        if (this.form.grpname != "") {
+        if (this.form.grpname !== "") {
           form_data.append("distroGroups", this.form.grpname);
         }
       }

@@ -20,153 +20,90 @@
     <b-row class="mt-2">
       <b-col>
         <b-collapse id="nodeLegend" class="mt-2 w-100">
-          <table class="w-100">
-            <tr>
-              <td colspan="3">
-                <div class="card-item font-weight-bold">
-                  Available
-                </div>
-              </td>
-              <td colspan="3">
-                <div class="card-reserved-powered font-weight-bold">
-                  Reserved
-                </div>
-              </td>
-              <td colspan="3">
-                <div class="card-grp-reserved-powered font-weight-bold">
-                  Group Resv
-                </div>
-              </td>
-              <td colspan="3">
-                <div class="card-other-reserved-powered font-weight-bold">
-                  Other Resv
-                </div>
-              </td>
-              <td colspan="3">
-                <div class="card-blocked-powered font-weight-bold">
-                  Blocked
-                </div>
-              </td>
-              <td colspan="3">
-                <div class="card-restricted-powered font-weight-bold">
-                  Restricted
-                </div>
-              </td>
-              <td colspan="3">
-                <div class="card-insterr-powered font-weight-bold">
-                  Inst Err
-                </div>
-              </td>
-            </tr>
-            <tr>
-              <td>
-                <div class="card-item font-weight-bold">
-                  <b-icon-arrow-up-circle-fill></b-icon-arrow-up-circle-fill>
-                </div>
-              </td>
-              <td>
-                <div class="card-available-off  font-weight-bold">
-                  <b-icon-arrow-down-circle-fill></b-icon-arrow-down-circle-fill>
-                </div>
-              </td>
-              <td>
-                <div class="card-available-unknown  font-weight-bold">
-                  <b-icon-question-circle-fill></b-icon-question-circle-fill>
-                </div>
-              </td>
-              <td>
-                <div class="card-reserved-powered font-weight-bold">
-                  <b-icon-arrow-up-circle-fill></b-icon-arrow-up-circle-fill>
-                </div>
-              </td>
-              <td>
-                <div class="card-reserved-off font-weight-bold">
-                  <b-icon-arrow-down-circle-fill></b-icon-arrow-down-circle-fill>
-                </div>
-              </td>
-              <td>
-                <div class="card-reserved-unknown font-weight-bold">
-                  <b-icon-question-circle-fill></b-icon-question-circle-fill>
-                </div>
-              </td>
-              <td>
-                <div class="card-grp-reserved-powered font-weight-bold">
-                  <b-icon-arrow-up-circle-fill></b-icon-arrow-up-circle-fill>
-                </div>
-              </td>
-              <td>
-                <div class="card-grp-reserved-off font-weight-bold">
-                  <b-icon-arrow-down-circle-fill></b-icon-arrow-down-circle-fill>
-                </div>
-              </td>
-              <td>
-                <div class="card-grp-reserved-unknown font-weight-bold">
-                  <b-icon-question-circle-fill></b-icon-question-circle-fill>
-                </div>
-              </td>
-              <td>
-                <div class="card-other-reserved-powered font-weight-bold">
-                  <b-icon-arrow-up-circle-fill></b-icon-arrow-up-circle-fill>
-                </div>
-              </td>
-              <td>
-                <div class="card-other-reserved-off  font-weight-bold">
-                  <b-icon-arrow-down-circle-fill></b-icon-arrow-down-circle-fill>
-                </div>
-              </td>
-              <td>
-                <div class="card-other-reserved-unknown  font-weight-bold">
-                  <b-icon-question-circle-fill></b-icon-question-circle-fill>
-                </div>
-              </td>
-              <td>
-                <div class="card-blocked-powered font-weight-bold">
-                  <b-icon-arrow-up-circle-fill></b-icon-arrow-up-circle-fill>
-                </div>
-              </td>
-              <td>
-                <div class="card-blocked-off  font-weight-bold">
-                  <b-icon-arrow-down-circle-fill></b-icon-arrow-down-circle-fill>
-                </div>
-              </td>
-              <td>
-                <div class="card-blocked-unknown  font-weight-bold">
-                  <b-icon-question-circle-fill></b-icon-question-circle-fill>
-                </div>
-              </td>
-              <td>
-                <div class="card-restricted-powered font-weight-bold">
-                  <b-icon-arrow-up-circle-fill></b-icon-arrow-up-circle-fill>
-                </div>
-              </td>
-              <td>
-                <div class="card-restricted-off  font-weight-bold">
-                  <b-icon-arrow-down-circle-fill></b-icon-arrow-down-circle-fill>
-                </div>
-              </td>
-              <td>
-                <div class="card-restricted-unknown  font-weight-bold">
-                  <b-icon-question-circle-fill></b-icon-question-circle-fill>
-                </div>
-              </td>
-              <td>
-                <div class="card-insterr-powered font-weight-bold">
-                  <b-icon-arrow-up-circle-fill></b-icon-arrow-up-circle-fill>
-                </div>
-              </td>
-              <td>
-                <div class="card-insterr-off  font-weight-bold">
-                  <b-icon-arrow-down-circle-fill></b-icon-arrow-down-circle-fill>
-                </div>
-              </td>
-              <td>
-                <div class="card-insterr-unknown  font-weight-bold">
-                  <b-icon-question-circle-fill></b-icon-question-circle-fill>
-                </div>
-              </td>
-            </tr>
-          </table>
+          <div class="legend">
+            <div class="legend-section">
+              <div class="legend-title text-uppercase font-weight-bold">
+                Reservation / availability
+              </div>
+              <b-row class="mt-2">
+                <b-col
+                    v-for="item in legendReservation"
+                    :key="item.key"
+                    cols="12"
+                    md="6"
+                    lg="4"
+                    class="mb-2"
+                >
+                  <div class="d-flex align-items-start">
+                    <div :class="['legend-swatch', item.swatchClass]">
+                      {{ item.swatchText }}
+                    </div>
+                    <div class="ml-2">
+                      <div class="font-weight-bold">{{ item.label }}</div>
+                      <div class="legend-desc">{{ item.desc }}</div>
+                    </div>
+                  </div>
+                </b-col>
+              </b-row>
+            </div>
+
+            <div class="legend-section mt-3">
+              <div class="legend-title text-uppercase font-weight-bold">
+                Node readiness (power + connectivity)
+              </div>
+              <b-row class="mt-2">
+                <b-col
+                    v-for="item in legendReadiness"
+                    :key="item.key"
+                    cols="12"
+                    md="6"
+                    lg="4"
+                    class="mb-2"
+                >
+                  <div class="d-flex align-items-start">
+                    <div class="legend-swatch card-item" :style="{ color: item.color }">
+                      <b-icon :icon="item.icon" aria-hidden="true"></b-icon>
+                    </div>
+                    <div class="ml-2">
+                      <div class="font-weight-bold">{{ item.label }}</div>
+                      <div class="legend-desc">{{ item.desc }}</div>
+                    </div>
+                  </div>
+                </b-col>
+              </b-row>
+              <div class="legend-note mt-2">
+                Install error nodes will never appear as <span class="font-weight-bold">Up</span>.
+              </div>
+            </div>
+
+            <div class="legend-section mt-3">
+              <div class="legend-title text-uppercase font-weight-bold">
+                Examples
+              </div>
+              <b-row class="mt-2">
+                <b-col
+                    v-for="ex in legendExamples"
+                    :key="ex.key"
+                    cols="12"
+                    md="6"
+                    lg="4"
+                    class="mb-2"
+                >
+                  <div class="d-flex align-items-start">
+                    <div :class="['legend-swatch', ex.className]">
+                      <b-icon :icon="ex.icon" aria-hidden="true"></b-icon>
+                    </div>
+                    <div class="ml-2">
+                      <div class="font-weight-bold">{{ ex.label }}</div>
+                      <div class="legend-desc">{{ ex.desc }}</div>
+                    </div>
+                  </div>
+                </b-col>
+              </b-row>
+            </div>
+          </div>
         </b-collapse>
+
       </b-col>
     </b-row>
 
@@ -185,7 +122,7 @@
             @mousedown="startNode(index)"   
             @mouseup="afterSelect(index)"
           >
-            {{ host }}
+            <span class="node-name">{{ host }}</span>
             <!-- <div class="tooltip-wrap">
               <div class="tooltip-content p-3 mb-2 bg-gradient-light text-dark">
                 <p>
@@ -209,6 +146,120 @@ export default {
       shiftStart: null,
       shiftEnd: null,
       lastClickedNode: null,
+      // Legend: background conveys reservation/access; text/icon color conveys readiness.
+      legendReservation: [
+        {
+          key: 'available',
+          swatchClass: 'card-item',
+          swatchText: 'Available',
+          label: 'Available',
+          desc: 'Node can be reserved by anyone.',
+        },
+        {
+          key: 'reserved',
+          swatchClass: 'card-reserved-up',
+          swatchText: 'Reserved',
+          label: 'Reserved',
+          desc: 'Node is currently reserved by you.',
+        },
+        {
+          key: 'group-reserved',
+          swatchClass: 'card-grp-reserved-up',
+          swatchText: 'Group',
+          label: 'Group reserved',
+          desc: 'Node is reserved and you are part of a group that can access the reservation.',
+        },
+        {
+          key: 'other-reserved',
+          swatchClass: 'card-other-reserved-up',
+          swatchText: 'Other',
+          label: 'Other reserved',
+          desc: 'Node is currently reserved by another user or group.',
+        },
+        {
+          key: 'blocked',
+          swatchClass: 'card-blocked-up',
+          swatchText: 'Blocked',
+          label: 'Blocked',
+          desc: 'Node is removed from the reservable pool. Existing reservations may complete. No ETA for return.',
+        },
+        {
+          key: 'restricted',
+          swatchClass: 'card-restricted-up',
+          swatchText: 'Restr.',
+          label: 'Restricted',
+          desc: 'Node can only be reserved by certain users/groups or during a time window. Only shown if you are not eligible.',
+        },
+        {
+          key: 'insterr',
+          swatchClass: 'card-insterr-on',
+          swatchText: 'Inst Err',
+          label: 'Install error',
+          desc: 'Startup failed during an active reservation. Will not show readiness as Up.',
+        },
+      ],
+
+      legendReadiness: [
+        {
+          key: 'off',
+          icon: 'circle-fill',
+          color: 'red',
+          label: 'Off',
+          desc: 'Node has no power. Normal for unused nodes; attention-worthy if reserved.',
+        },
+        {
+          key: 'on',
+          icon: 'circle-fill',
+          color: 'cornflowerblue',
+          label: 'On',
+          desc: 'Node has power but no network connectivity.',
+        },
+        {
+          key: 'ping',
+          icon: 'circle-fill',
+          color: 'gold',
+          label: 'Ping',
+          desc: 'Node has power and responds to ICMP ping (not yet login-ready).',
+        },
+        {
+          key: 'up',
+          icon: 'circle-fill',
+          color: 'white',
+          label: 'Up / Ready',
+          desc: 'Node responds to TCP keepalive (login-ready).',
+        },
+        {
+          key: 'unknown',
+          icon: 'question-circle-fill',
+          color: 'dimgray',
+          label: 'Unknown',
+          desc: 'No data available.',
+        },
+      ],
+
+      legendExamples: [
+        {
+          key: 'ex-reserved-up',
+          className: 'card-reserved-up',
+          icon: 'circle-fill',
+          label: 'Reserved + Up',
+          desc: 'Reserved by you and login-ready.',
+        },
+        {
+          key: 'ex-reserved-off',
+          className: 'card-reserved-off',
+          icon: 'circle-fill',
+          label: 'Reserved + Off',
+          desc: 'Reserved, but currently powered down.',
+        },
+        {
+          key: 'ex-insterr-ping',
+          className: 'card-insterr-ping',
+          icon: 'circle-fill',
+          label: 'Install error + Ping',
+          desc: 'Reservation startup failed; node may still respond to ping.',
+        },
+      ],
     };
   },
   methods: {
@@ -285,25 +336,49 @@ export default {
     },
     
     hostStatus(host) {
-      if (this.hostsResvPow.includes(host)) {
-        return "card-reserved-powered";
-      } else if (this.hostsResvDown.includes(host)) {
-        return "card-reserved-off";
-      } else if (this.hostsResvUnknown.includes(host)) {
-        return "card-reserved-unknown";
-      } else if (this.hostsGrpResvPow.includes(host)) {
-        return "card-grp-reserved-powered";
-      } else if (this.hostsGrpResvDown.includes(host)) {
-        return "card-grp-reserved-off";
-      } else if (this.hostsGrpResvUnknown.includes(host)) {
-        return "card-grp-reserved-unknown";
-      } else if (this.hostsOtherResvUnknown.includes(host)) {
-        return "card-other-reserved-unknown";
-      } else if (this.hostsOtherResvPow.includes(host)) {
-        return "card-other-reserved-powered";
-      } else if (this.hostsOtherResvDown.includes(host)) {
-        return "card-other-reserved-off";
-      } else if (this.hostsAvlDown.includes(host)) {
+
+      // 1) Highest priority: blocked (maintenance)
+      if (this.hostsBlockedPow.includes(host)) return "card-blocked-up";
+      if (this.hostsBlockedPing.includes(host)) return "card-blocked-ping";
+      if (this.hostsBlockedOn.includes(host)) return "card-blocked-on";
+      if (this.hostsBlockedDown.includes(host)) return "card-blocked-off";
+      if (this.hostsBlockedUnknown.includes(host)) return "card-blocked-unknown";
+
+      // 2) Next: install error
+      if (this.hostsInstErrPow.includes(host)) return "card-insterr-up";
+      if (this.hostsInstErrPing.includes(host)) return "card-insterr-ping";
+      if (this.hostsInstErrOn.includes(host)) return "card-insterr-on";
+      if (this.hostsInstErrDown.includes(host)) return "card-insterr-off";
+      if (this.hostsInstErrUnknown.includes(host)) return "card-insterr-unknown";
+
+      // 3) Next: restricted
+      if (this.hostsRestrictedPow.includes(host)) return "card-restricted-up";
+      if (this.hostsRestrictedPing.includes(host)) return "card-restricted-ping";
+      if (this.hostsRestrictedOn.includes(host)) return "card-restricted-on";
+      if (this.hostsRestrictedDown.includes(host)) return "card-restricted-off";
+      if (this.hostsRestrictedUnknown.includes(host)) return "card-restricted-unknown";
+
+      // 4) Reserved buckets (your user / group / other)
+      if (this.hostsResvUp.includes(host)) return "card-reserved-up";
+      if (this.hostsResvPing.includes(host)) return "card-reserved-ping";
+      if (this.hostsResvOn.includes(host)) return "card-reserved-on";
+      if (this.hostsResvDown.includes(host)) return "card-reserved-off";
+      if (this.hostsResvUnknown.includes(host)) return "card-reserved-unknown";
+
+      if (this.hostsGrpResvPow.includes(host)) return "card-grp-reserved-up";
+      if (this.hostsGrpResvPing.includes(host)) return "card-grp-reserved-ping";
+      if (this.hostsGrpResvOn.includes(host)) return "card-grp-reserved-on";
+      if (this.hostsGrpResvDown.includes(host)) return "card-grp-reserved-off";
+      if (this.hostsGrpResvUnknown.includes(host)) return "card-grp-reserved-unknown";
+
+      if (this.hostsOtherResvPow.includes(host)) return "card-other-reserved-up";
+      if (this.hostsOtherResvPing.includes(host)) return "card-other-reserved-ping";
+      if (this.hostsOtherResvOn.includes(host)) return "card-other-reserved-on";
+      if (this.hostsOtherResvDown.includes(host)) return "card-other-reserved-off";
+      if (this.hostsOtherResvUnknown.includes(host)) return "card-other-reserved-unknown";
+
+
+      if (this.hostsAvlDown.includes(host)) {
         if(this.selectedHosts.includes(host)) {
           return "card-selected-off"
         } else {
@@ -315,27 +390,21 @@ export default {
         } else {
         return "card-available-unknown"
         }
-      } else if (this.hostsBlockedUnknown.includes(host)) {
-        return "card-blocked-unknown";
-      } else if (this.hostsBlockedPow.includes(host)) {
-        return "card-blocked-powered";
-      } else if (this.hostsBlockedDown.includes(host)) {
-        return "card-blocked-off";
-      } else if (this.hostsInstErrUnknown.includes(host)) {
-        return "card-insterr-unknown";
-      } else if (this.hostsInstErrPow.includes(host)) {
-        return "card-insterr-powered";
-      } else if (this.hostsInstErrDown.includes(host)) {
-        return "card-insterr-off";
-      } else if (this.hostsRestrictedUnknown.includes(host)) {
-        return "card-restricted-unknown";
-      } else if (this.hostsRestrictedPow.includes(host)) {
-        return "card-restricted-powered";
-      } else if (this.hostsRestrictedDown.includes(host)) {
-        return "card-restricted-off";
+      } else if (this.hostsAvlPing.includes(host)) {
+        if(this.selectedHosts.includes(host)) {
+          return "card-selected-ping"
+        } else {
+          return "card-item"
+        }
+      } else if (this.hostsAvlOn.includes(host)) {
+        if(this.selectedHosts.includes(host)) {
+          return "card-selected-on"
+        } else {
+          return "card-item"
+        }
       } else if (this.hostsAvlPow.includes(host)) {
         if(this.selectedHosts.includes(host)) {
-          return "card-selected-powered"
+          return "card-selected-up"
         } else {
           return "card-item";
         }
@@ -358,8 +427,14 @@ export default {
     hostsOtherReserved() {
       return this.$store.getters.hostsOtherReserved;
     },
-    hostsResvPow() {
-      return this.$store.getters.hostsResvPow;
+    hostsResvUp() {
+      return this.$store.getters.hostsResvUp;
+    },
+    hostsResvOn() {
+      return this.$store.getters.hostsResvOn;
+    },
+    hostsResvPing() {
+      return this.$store.getters.hostsResvPing;
     },
     hostsResvDown() {
       return this.$store.getters.hostsResvDown;
@@ -370,6 +445,12 @@ export default {
     hostsGrpResvPow() {
       return this.$store.getters.hostsGrpResvPow;
     },
+    hostsGrpResvOn() {
+      return this.$store.getters.hostsGrpResvOn;
+    },
+    hostsGrpResvPing() {
+      return this.$store.getters.hostsGrpResvPing;
+    },
     hostsGrpResvDown() {
       return this.$store.getters.hostsGrpResvDown;
     },
@@ -379,6 +460,12 @@ export default {
     hostsOtherResvPow() {
       return this.$store.getters.hostsOtherResvPow;
     },
+    hostsOtherResvOn() {
+      return this.$store.getters.hostsOtherResvOn;
+    },
+    hostsOtherResvPing() {
+      return this.$store.getters.hostsOtherResvPing;
+    },
     hostsOtherResvDown() {
       return this.$store.getters.hostsOtherResvDown;
     },
@@ -387,6 +474,12 @@ export default {
     },
     hostsAvlPow() {
       return this.$store.getters.hostsAvlPow;
+    },
+    hostsAvlPing() {
+      return this.$store.getters.hostsAvlPing;
+    },
+    hostsAvlOn() {
+      return this.$store.getters.hostsAvlOn;
     },
     hostsAvlDown() {
       return this.$store.getters.hostsAvlDown;
@@ -400,6 +493,12 @@ export default {
     hostsBlockedDown() {
       return this.$store.getters.hostsBlockedDown;
     },
+    hostsBlockedOn() {
+      return this.$store.getters.hostsBlockedOn;
+    },
+    hostsBlockedPing() {
+      return this.$store.getters.hostsBlockedPing;
+    },
     hostsBlockedPow() {
       return this.$store.getters.hostsBlockedPow;
     },
@@ -408,6 +507,12 @@ export default {
     },
     hostsInstErrDown() {
       return this.$store.getters.hostsInstErrDown;
+    },
+    hostsInstErrOn() {
+      return this.$store.getters.hostsInstErrOn;
+    },
+    hostsInstErrPing() {
+      return this.$store.getters.hostsInstErrPing;
     },
     hostsInstErrPow() {
       return this.$store.getters.hostsInstErrPow;
@@ -418,14 +523,26 @@ export default {
     hostsRestrictedDown() {
       return this.$store.getters.hostsRestrictedDown;
     },
+    hostsRestrictedOn() {
+      return this.$store.getters.hostsRestrictedOn;
+    },
+    hostsRestrictedPing() {
+      return this.$store.getters.hostsRestrictedPing;
+    },
     hostsRestrictedPow() {
-      return this.$store.getters.hostsRestrictedPow;
+      return this.$store.getters.hostsRestrictedOn;
     },
     selectedHosts(){
       return this.$store.getters.selectedHosts;
     },
     hostSelectedPow(){
       return this.$store.getters.hostSelectedPow;
+    },
+    hostSelectedPing(){
+      return this.$store.getters.hostSelectedPing;
+    },
+    hostSelectedOn(){
+      return this.$store.getters.hostSelectedOn;
     },
     hostSelectedDown(){
       return this.$store.getters.hostSelectedDown;
@@ -435,9 +552,45 @@ export default {
     },
     gridStyle() {
       return {
-        gridTemplateColumns: `repeat(auto-fit, minmax(50px, 1fr))`,
+        gridTemplateColumns: `repeat(auto-fit, minmax(7ch, 1fr))`,
+        gridAutoRows: `40px`, // <-- makes every cell taller
       };
     },
   },
 };
 </script>
+
+<style scoped>
+.legend {
+  border-radius: 4px;
+}
+
+.legend-title {
+  font-size: 0.85rem;
+}
+
+.legend-desc {
+  font-size: 0.8rem;
+  color: #6c757d; /* Bootstrap text-muted */
+  line-height: 1.2;
+}
+
+.legend-note {
+  font-size: 0.8rem;
+  color: #6c757d;
+}
+
+.legend-swatch {
+  min-width: 78px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  padding-left: 6px;
+  padding-right: 6px;
+  font-weight: bold;
+  user-select: none;
+  pointer-events: none;
+}
+</style>

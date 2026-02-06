@@ -35,7 +35,28 @@ button {
   display: grid;
   grid-gap: 0.2em;
   border-radius: 4px;
-  font-size: small;
+  font-size: initial; /* overrides: font-size: small; */
+}
+
+.card-list > .list-group-item {
+  height: 100%;                 /* fill the gridAutoRows height */
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  box-sizing: border-box;
+  container-type: inline-size;  /* enables cqi sizing for the label */
+}
+
+/* If you wrapped the hostname in <span class="node-name"> */
+.card-list > .list-group-item .node-name {
+  font-size: clamp(0.95rem, 14cqi, 1.25rem);
+  line-height: 1;
+  padding: 0 0.35rem;           /* keeps visible background margin */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .card-item {
@@ -52,7 +73,7 @@ button {
   font-weight: bold;
 }
 
-.card-reserved-powered {
+.card-reserved-up {
   background-color: green;
   color: white;
   font-weight: bold;
@@ -61,12 +82,45 @@ button {
   padding-right: 3px;
   pointer-events: none;
 }
-.card-grp-reserved-powered:hover {
+.card-grp-reserved-up:hover {
   background-color: green;
   color: white;
   font-weight: bold;
   pointer-events: none;
 }
+
+.card-reserved-on {
+  background-color: green;
+  color: cornflowerblue;
+  font-weight: bold;
+  border-radius: 4px;
+  padding-left: 3px;
+  padding-right: 3px;
+  pointer-events: none;
+}
+.card-grp-reserved-on:hover {
+  background-color: green;
+  color: cornflowerblue;
+  font-weight: bold;
+  pointer-events: none;
+}
+
+.card-reserved-ping {
+  background-color: green;
+  color: orange;
+  font-weight: bold;
+  border-radius: 4px;
+  padding-left: 3px;
+  padding-right: 3px;
+  pointer-events: none;
+}
+.card-grp-reserved-ping:hover {
+  background-color: green;
+  color: orange;
+  font-weight: bold;
+  pointer-events: none;
+}
+
 .card-reserved-off {
   background-color: green;
   color: red;
@@ -85,7 +139,7 @@ button {
 
 .card-reserved-unknown {
   background-color: green;
-  color: orange;
+  color: dimgray;
   font-weight: bold;
   border-radius: 4px;
   padding-left: 3px;
@@ -94,12 +148,12 @@ button {
 }
 .card-reserved-unknown:hover {
   background-color: green;
-  color: orange;
+  color: dimgray;
   font-weight: bold;
   pointer-events: none;
 }
 
-.card-grp-reserved-powered {
+.card-grp-reserved-up {
   background-image: repeating-linear-gradient(
     45deg,
     green,
@@ -115,7 +169,7 @@ button {
   padding-right: 3px;
   pointer-events: none;
 }
-.card-grp-reserved-powered:hover {
+.card-grp-reserved-up:hover {
   background-color: green;
   color: white;
   font-weight: bold;
@@ -154,7 +208,7 @@ button {
     darkgreen 20px
   );
   background-color: green;
-  color: orange;
+  color: dimgray;
   font-weight: bold;
   border-radius: 4px;
   padding-left: 3px;
@@ -163,12 +217,12 @@ button {
 }
 .card-grp-reserved-unknown:hover {
   background-color: green;
-  color: orange;
+  color: dimgray;
   font-weight: bold;
   pointer-events: none;
 }
 
-.card-other-reserved-powered {
+.card-other-reserved-up {
   background-color: rebeccapurple;
   color: white;
   font-weight: bold;
@@ -177,9 +231,41 @@ button {
   padding-right: 3px;
   pointer-events: none;
 }
-.card-other-reserved-powered:hover {
+.card-other-reserved-up:hover {
   background-color: rebeccapurple;
   color: white;
+  font-weight: bold;
+  pointer-events: none;
+}
+
+.card-other-reserved-on {
+  background-color: rebeccapurple;
+  color: cornflowerblue;
+  font-weight: bold;
+  border-radius: 4px;
+  padding-left: 3px;
+  padding-right: 3px;
+  pointer-events: none;
+}
+.card-other-reserved-on:hover {
+  background-color: rebeccapurple;
+  color: cornflowerblue;
+  font-weight: bold;
+  pointer-events: none;
+}
+
+.card-other-reserved-ping {
+  background-color: rebeccapurple;
+  color: orange;
+  font-weight: bold;
+  border-radius: 4px;
+  padding-left: 3px;
+  padding-right: 3px;
+  pointer-events: none;
+}
+.card-other-reserved-ping:hover {
+  background-color: rebeccapurple;
+  color: orange;
   font-weight: bold;
   pointer-events: none;
 }
@@ -202,7 +288,7 @@ button {
 
 .card-other-reserved-unknown {
   background-color: rebeccapurple;
-  color: orange;
+  color: dimgray;
   font-weight: bold;
   border-radius: 4px;
   padding-left: 3px;
@@ -211,7 +297,7 @@ button {
 }
 .card-other-reserved-unknown:hover {
   background-color: rebeccapurple;
-  color: orange;
+  color: dimgray;
   font-weight: bold;
   pointer-events: none;
 }
@@ -232,7 +318,7 @@ button {
 
 .card-available-unknown {
   background-color: black;
-  color: orange;
+  color: dimgray;
   font-weight: bold;
   border-radius: 4px;
   padding-left: 3px;
@@ -249,7 +335,7 @@ button {
   font-weight: bold;
 }
 
-.card-blocked-powered {
+.card-blocked-up {
   background-color: rgb(160, 137, 4);
   color: white;
   font-weight: bold;
@@ -258,9 +344,41 @@ button {
   padding-right: 3px;
   pointer-events: none;
 }
-.card-blocked-powered:hover {
+.card-blocked-up:hover {
   background-color: rgb(160, 137, 4);
   color: white;
+  font-weight: bold;
+  pointer-events: none;
+}
+
+.card-blocked-on {
+  background-color: rgb(160, 137, 4);
+  color: cornflowerblue;
+  font-weight: bold;
+  border-radius: 4px;
+  padding-left: 3px;
+  padding-right: 3px;
+  pointer-events: none;
+}
+.card-blocked-on:hover {
+  background-color: rgb(160, 137, 4);
+  color: cornflowerblue;
+  font-weight: bold;
+  pointer-events: none;
+}
+
+.card-blocked-ping {
+  background-color: rgb(160, 137, 4);
+  color: orange;
+  font-weight: bold;
+  border-radius: 4px;
+  padding-left: 3px;
+  padding-right: 3px;
+  pointer-events: none;
+}
+.card-blocked-ping:hover {
+  background-color: rgb(160, 137, 4);
+  color: orange;
   font-weight: bold;
   pointer-events: none;
 }
@@ -283,7 +401,7 @@ button {
 
 .card-blocked-unknown {
   background-color: rgb(160, 137, 4);
-  color: orange;
+  color: dimgray;
   font-weight: bold;
   border-radius: 4px;
   padding-left: 3px;
@@ -292,12 +410,12 @@ button {
 }
 .card-blocked-unknown:hover {
   background-color: rgb(160, 137, 4);
-  color: orange;
+  color: dimgray;
   font-weight: bold;
   pointer-events: none;
 }
 
-.card-restricted-powered {
+.card-restricted-up {
   background-color: violet;
   color: white;
   font-weight: bold;
@@ -306,9 +424,41 @@ button {
   padding-right: 3px;
   pointer-events: none;
 }
-.card-restricted-powered:hover {
+.card-restricted-up:hover {
   background-color: violet;
   color: white;
+  font-weight: bold;
+  pointer-events: none;
+}
+
+.card-restricted-on {
+  background-color: violet;
+  color: cornflowerblue;
+  font-weight: bold;
+  border-radius: 4px;
+  padding-left: 3px;
+  padding-right: 3px;
+  pointer-events: none;
+}
+.card-restricted-on:hover {
+  background-color: violet;
+  color: cornflowerblue;
+  font-weight: bold;
+  pointer-events: none;
+}
+
+.card-restricted-ping {
+  background-color: violet;
+  color: orange;
+  font-weight: bold;
+  border-radius: 4px;
+  padding-left: 3px;
+  padding-right: 3px;
+  pointer-events: none;
+}
+.card-restricted-ping:hover {
+  background-color: violet;
+  color: orange;
   font-weight: bold;
   pointer-events: none;
 }
@@ -331,7 +481,7 @@ button {
 
 .card-restricted-unknown {
   background-color: violet;
-  color: orange;
+  color: dimgray;
   font-weight: bold;
   border-radius: 4px;
   padding-left: 3px;
@@ -340,30 +490,30 @@ button {
 }
 .card-restricted-unknown:hover {
   background-color: violet;
-  color: orange;
+  color: dimgray;
   font-weight: bold;
   pointer-events: none;
 }
 
-.card-insterr-powered {
-  background-color: lightskyblue;
-  color: white;
+.card-insterr-on {
+  background-color: red;
+  color: cornflowerblue;
   font-weight: bold;
   border-radius: 4px;
   padding-left: 3px;
   padding-right: 3px;
   pointer-events: none;
 }
-.card-insterr-powered:hover {
-  background-color: lightskyblue;
-  color: white;
+.card-insterr-on:hover {
+  background-color: red;
+  color: cornflowerblue;
   font-weight: bold;
   pointer-events: none;
 }
 
 .card-insterr-off {
-  background-color: lightskyblue;
-  color: red;
+  background-color: red;
+  color: black;
   font-weight: bold;
   border-radius: 4px;
   padding-left: 3px;
@@ -371,14 +521,14 @@ button {
   pointer-events: none;
 }
 .card-insterr-off:hover {
-  background-color: lightskyblue;
-  color: red;
+  background-color: red;
+  color: black;
   font-weight: bold;
   pointer-events: none;
 }
 
-.card-insterr-unknown {
-  background-color: lightskyblue;
+.card-insterr-ping {
+  background-color: red;
   color: orange;
   font-weight: bold;
   border-radius: 4px;
@@ -386,16 +536,32 @@ button {
   padding-right: 3px;
   pointer-events: none;
 }
-.card-insterr-unknown:hover {
-  background-color: lightskyblue;
+.card-insterr-ping:hover {
+  background-color: red;
   color: orange;
   font-weight: bold;
   pointer-events: none;
 }
 
-.card-selected-powered {
+.card-selected-up {
   background-color: lightgreen;
   color: white;
+  font-weight: bold;
+  border-radius: 4px;
+  padding-left: 3px;
+  padding-right: 3px;
+}
+.card-selected-on {
+  background-color: lightgreen;
+  color: cornflowerblue;
+  font-weight: bold;
+  border-radius: 4px;
+  padding-left: 3px;
+  padding-right: 3px;
+}
+.card-selected-ping {
+  background-color: lightgreen;
+  color: orange;
   font-weight: bold;
   border-radius: 4px;
   padding-left: 3px;
@@ -411,7 +577,7 @@ button {
 }
 .card-selected-unknown {
   background-color: lightgreen;
-  color: orange;
+  color: dimgray;
   font-weight: bold;
   border-radius: 4px;
   padding-left: 3px;

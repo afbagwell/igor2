@@ -78,7 +78,7 @@ func (h *Host) BeforeDelete(_ *gorm.DB) (delErr error) {
 	return nil
 }
 
-func (h *Host) getHostData(powered *bool, user *User) common.HostData {
+func (h *Host) getHostData(powered HostStatus, user *User) common.HostData {
 
 	resNames := resNamesOfResList(h.Reservations)
 	groups := make([]string, 0, 10)
@@ -110,15 +110,18 @@ func (h *Host) getHostData(powered *bool, user *User) common.HostData {
 		}
 	}
 
-	poweredOn := "unknown"
-	if powered != nil {
-		if *powered {
-			poweredOn = "true"
-		} else {
-			poweredOn = "false"
-		}
+	hostNetStatus := "unknown"
+	if powered == HostStatusOff {
+		hostNetStatus = "off"
+	} else if powered == HostStatusOn {
+		hostNetStatus = "on"
+	} else if powered == HostStatusPingable {
+		hostNetStatus = "ping"
+	} else if powered == HostStatusUp {
+		hostNetStatus = "up"
 	} else {
-		logger.Warn().Msgf("node power status not available for '%s'", h.Name)
+		hostNetStatus = "unknown"
+		logger.Warn().Msgf("node network status not available for '%s'", h.Name)
 	}
 
 	hd := common.HostData{
@@ -130,7 +133,7 @@ func (h *Host) getHostData(powered *bool, user *User) common.HostData {
 		Mac:          h.Mac,
 		BootMode:     h.BootMode,
 		State:        h.State.String(),
-		Powered:      poweredOn,
+		Powered:      hostNetStatus,
 		Cluster:      h.Cluster.Name,
 		HostPolicy:   h.HostPolicy.Name,
 		AccessGroups: groups,
@@ -145,29 +148,29 @@ func filterHostList(hostList []Host, filterPowered *bool, user *User) []common.H
 
 	var hostDetails = make([]common.HostData, 0, len(hostList))
 
-	powerMapMU.Lock()
+	hostStatusMapMU.Lock()
 	for _, h := range hostList {
 
 		var hd common.HostData
-		if _, ok := powerMap[h.HostName]; ok {
+		if _, ok := hostStatusMap[h.HostName]; ok {
 			// if the powered boolean search param was included only send hosts that match that
 			// power condition, otherwise send everything
 			if filterPowered != nil {
-				if filterPowered == powerMap[h.HostName] {
-					hd = h.getHostData(powerMap[h.HostName], user)
+				if *filterPowered && hostStatusMap[h.HostName] > HostStatusOff {
+					hd = h.getHostData(hostStatusMap[h.HostName], user)
 				} else {
 					continue
 				}
 			} else {
-				hd = h.getHostData(powerMap[h.HostName], user)
+				hd = h.getHostData(hostStatusMap[h.HostName], user)
 			}
 		} else {
-			hd = h.getHostData(nil, user)
+			hd = h.getHostData(HostStatusUnknown, user)
 		}
 
 		hostDetails = append(hostDetails, hd)
 	}
-	powerMapMU.Unlock()
+	hostStatusMapMU.Unlock()
 
 	// Sort hosts in numeric order
 	sort.Slice(hostDetails, func(i, j int) bool {

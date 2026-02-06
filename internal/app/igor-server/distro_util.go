@@ -5,6 +5,7 @@
 package igorserver
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -147,7 +148,7 @@ func parseKernelInfo(image *DistroImage) (kInfo string, breed string) {
 
 	targetPath := filepath.Join(getImageStorePath(image.ImageID), image.Kernel)
 
-	fileCmdOut, fileCmdErr := processWrapper("file", targetPath)
+	fileCmdOut, fileCmdErr := processWrapper(context.Background(), 0, "file", targetPath)
 	if fileCmdErr != nil {
 		logger.Warn().Msgf("file command error on '%s': %v", targetPath, fileCmdErr)
 	}

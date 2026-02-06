@@ -94,7 +94,6 @@
 import Vue from "vue";
 import moment from "moment";
 import SmartTable from "vuejs-smart-table";
-import ref from "vue";
 Vue.use(SmartTable);
 export default {
   name: "ReservationTable",

@@ -31,7 +31,9 @@ func Execute(configFilepath *string) {
 	igor.ElevateMap = common.NewPassiveTtlMap(time.Duration(igor.Auth.ElevateTimeout) * time.Minute)
 	logger.Info().Msgf("admin user elevation window set to %d minutes", igor.Auth.ElevateTimeout)
 
-	igor.IPowerStatus = NewNmapPowerStatus()
+	igor.PortProbe = NewTcpProbe()
+	igor.PingProbe = NewPingProbe()
+	igor.PowerProbe = NewPowerProbe()
 
 	// set IResInstaller to tftp
 	// we may eventually give them a choice (cobbler, etc.)
@@ -48,12 +50,12 @@ func Execute(configFilepath *string) {
 	// need to check igor config to see if nodes have been added or removed
 	syncNodes(hostList)
 
-	logger.Info().Msg("bootstrapping main worker processes")
+	logger.Debug().Msg("bootstrapping main worker processes")
 
 	if len(hostList) > 0 {
-		logger.Info().Msgf("starting node power status manager; %d registered hosts", len(hostList))
+		logger.Info().Msgf("starting host probe manager; %d registered hosts", len(hostList))
 		wg.Add(1)
-		go powerStatusManager(hostList)
+		go hostProbeManager(hostList)
 	}
 
 	// This call will not return until the server terminates

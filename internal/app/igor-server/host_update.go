@@ -19,6 +19,7 @@ func doUpdateHost(hostName string, changes map[string]interface{}, r *http.Reque
 	clog := hlog.FromRequest(r)
 
 	status = http.StatusInternalServerError // default status, overridden at end if no errors
+	var clusterConfs []ClusterConfig
 
 	if err = performDbTx(func(tx *gorm.DB) error {
 
@@ -52,7 +53,7 @@ func doUpdateHost(hostName string, changes map[string]interface{}, r *http.Reque
 				var yDoc []byte
 
 				if clusters, cDumpErr = dbReadClusters(nil, tx); cDumpErr == nil {
-					if yDoc, cDumpErr = assembleYamlOutput(clusters); cDumpErr == nil {
+					if yDoc, clusterConfs, cDumpErr = assembleYamlOutput(clusters); cDumpErr == nil {
 						finalPath, cDumpErr = updateClusterConfigFile(yDoc, clog)
 					}
 				}
@@ -62,6 +63,10 @@ func doUpdateHost(hostName string, changes map[string]interface{}, r *http.Reque
 		}
 
 	}); err == nil {
+		for _, c := range clusterConfs {
+			c.storeClusterRanges()
+		}
+		clusterUpdateChan <- struct{}{}
 		status = http.StatusOK
 	}
 	return

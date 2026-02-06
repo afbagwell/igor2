@@ -740,8 +740,8 @@ func printReservations(rb *common.ResponseBodyReservations) {
 				if len(r.HostsPowerNA) > 0 {
 					downNA += cWarning.Sprint(r.HostsPowerNA) + "/"
 				}
-				if len(r.HostsDown) > 0 {
-					downNA += cAlert.Sprint(r.HostsDown)
+				if len(r.HostsOff) > 0 {
+					downNA += cAlert.Sprint(r.HostsOff)
 				}
 				downNA = strings.TrimSuffix(downNA, "/")
 			}
