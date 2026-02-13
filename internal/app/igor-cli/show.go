@@ -55,6 +55,7 @@ Node Power Status (text color):
   ` + pPing.Sprint("PING") + ` : node is ping-able; no TCP
   ` + pOn.Sprint("ON") + `   : node has power only
   ` + pOff.Sprint("OFF") + `  : node power is off
+  ` + pUnknown.Sprint("N/A") + `  : no reportable power status
 
 Node Reservation Status (background color):
 
@@ -669,7 +670,7 @@ func printShow(rb *common.ResponseBodyShow, flagset *pflag.FlagSet) {
 				{Ping, r.HostsPing, pPing.Sprintf},
 				{On, r.HostsOn, pOn.Sprintf},
 				{Off, r.HostsOff, pOff.Sprintf},
-				{PowerNA, r.HostsPowerNA, cWarning.Sprintf},
+				{PowerNA, r.HostsPowerNA, pUnknown.Sprintf},
 			}
 
 			var parts []string

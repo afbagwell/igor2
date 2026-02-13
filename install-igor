@@ -1,10 +1,11 @@
 #!/bin/bash
 
 INSTALL_ALL=true
+INSTALL_PACKAGES=false
 bold=$(tput bold)
 normal=$(tput sgr0)
 
-USAGE="Usage: install-igor [-server] [-cli] [-web] [-h|-help]
+USAGE="Usage: install-igor [-server] [-cli] [-web] [-packages] [-h|-help]
 ${bold}(must be run as root)${normal}"
 HELP="
 This script installs or upgrades Igor applications. A first-time install sets
@@ -14,11 +15,11 @@ as the ${bold}igor2.tar.gz${normal} file created with the ${bold}build-igor${nor
 By default, all applications are installed or upgraded. To target specific
 applications, use the ${bold}-server${normal}, ${bold}-cli${normal}, and/or ${bold}-web${normal} flags.
 
-For igor-server installation, the script will use the OS's package manager to
-download npm and sqlite if they are not already present. If the database needs
-to be upgraded, run the executable in the db-migrate folder, which is unpacked
-during the installation process. The server will fail to start if the required
-database version does not match (details will be in the output log).
+For igor-server installation, including the -packages flag will use the OS's
+package manager to download and install or update sqlite. If Igor's database
+needs to be upgraded, run the executable in the db-migrate folder, which is
+unpacked during the installation process. The server will fail to start if the
+required database version does not match (details will be in the output log).
 
 When installing either igor-server or igor-web, a sub-folder named 'igor-extra'
 will be created in your current working directory. This folder contains example
@@ -51,6 +52,10 @@ while [[ $# -gt 0 ]]; do
    -web)
       INSTALL_WEB=true
       INSTALL_ALL=false
+      shift
+      ;;
+   -packages)
+      INSTALL_PACKAGES=true
       shift
       ;;
    -all)
@@ -151,14 +156,19 @@ chown root:root $SERVER_DIR
 
 if [[ $INSTALL_ALL == true || $INSTALL_SERVER == true ]]; then
    echo -e "Installing Igor server\n"
-   echo "Starting Igor server package install ..."
-   if [ $DEBIAN ]; then
-      apt-get install -y sqlite3
+
+   if [[ "$INSTALL_PACKAGES" == true ]]; then
+      echo "Starting Igor server package install for sqlite3 ..."
+      if [ $DEBIAN ]; then
+         apt-get install -y sqlite3
+      fi
+      if [ $RH ]; then
+         yum install -y sqlite
+      fi
+      echo -e "Igor server package installation finished.\n"
+   else
+      echo "Skipping OS package installation (use -packages to enable)."
    fi
-   if [ $RH ]; then
-      yum install -y sqlite
-   fi
-   echo -e "Igor server package installation finished.\n"
 
    tar -xzf igor2.tar.gz --strip-component=1 -C $SERVER_DIR ./igor-server
    if [ -f "$ETC_DIR/igor-server.yaml" ]; then

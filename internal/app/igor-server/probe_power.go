@@ -25,7 +25,7 @@ func (c *PowerProbe) probeHosts(hosts []Host) {
 	// ipmitool -I lanplus -H %v.ipmi -U admin -P admin power status
 
 	logger.Debug().Msgf("running IPMI status on hosts")
-	outputMap, err := runAllCapture(igor.ExternalCmds.PowerStatus, hostNames, 0)
+	outputMap, err := runAllCapture(igor.ExternalCmds.PowerStatus, hostNames, c.Timeout)
 	if err != nil {
 		logger.Error().Msgf("error running host power status commands: %v", err)
 	}
@@ -39,12 +39,17 @@ func (c *PowerProbe) probeHosts(hosts []Host) {
 		w = strings.ToLower(w)
 		code := HostStatusOff
 		if strings.Contains(w, "fail") || strings.Contains(w, "error") {
-			logger.Debug().Msgf("probe power: node %v failed to get power status - defaulting to 'off' - %v", k, w)
+			logger.Debug().Msgf("probe power: node %v power status returned fail or error - %v", k, w)
+			code = HostStatusUnknown
 		} else if strings.Contains(w, PowerOn) {
 			code = HostStatusOn
 			powerList = append(powerList, k)
-		} else {
+		} else if strings.Contains(w, PowerOff) {
+			code = HostStatusOff
 			noPowerList = append(noPowerList, k)
+		} else {
+			logger.Debug().Msgf("probe power: node %v no power status returned - %v", k, w)
+			code = HostStatusUnknown
 		}
 		localPowerMap[k] = code
 	}

@@ -11,17 +11,17 @@ import (
 )
 
 type Runner struct {
-	fn      RunnerFn
-	retries uint
-	tokens  chan bool
-	wg      sync.WaitGroup
-	mu      sync.Mutex // guards below
-	errs    map[string]error
+	fn       RunnerFn
+	attempts uint
+	tokens   chan bool
+	wg       sync.WaitGroup
+	mu       sync.Mutex // guards below
+	errs     map[string]error
 }
 
 // DefaultRunner returns a runner with parameters based on igor.Config.
 func DefaultRunner(fn RunnerFn) *Runner {
-	r, err := NewRunner(fn, Limit(igor.ExternalCmds.ConcurrencyLimit), Retries(igor.ExternalCmds.CommandRetries))
+	r, err := NewRunner(fn, Limit(igor.ExternalCmds.ConcurrencyLimit), Attempts(igor.ExternalCmds.CommandRetries))
 	if err != nil {
 		exitPrintFatal(fmt.Sprintf("invalid parameters: %v", err))
 	}
@@ -66,11 +66,10 @@ func Limit(v uint) func(*Runner) error {
 	}
 }
 
-// Retries specifies the number of times to rerun a function that returns an
-// error.
-func Retries(v uint) func(*Runner) error {
+// Attempts specifies the number of times to run a function if it returns an error.
+func Attempts(v uint) func(*Runner) error {
 	return func(r *Runner) error {
-		r.retries = v
+		r.attempts = 1 + v
 
 		return nil
 	}
@@ -90,10 +89,10 @@ func (r *Runner) Run(host string) {
 			}()
 		}
 
-		// propagate error only when we run out of retries
+		// propagate error only when we run out of attempts
 		var err error
 
-		for i := uint(0); i < r.retries+1; i++ {
+		for i := uint(0); i < r.attempts; i++ {
 			if i > 0 {
 				time.Sleep(time.Second)
 			}
@@ -102,7 +101,7 @@ func (r *Runner) Run(host string) {
 				break
 			}
 
-			logger.Error().Msgf("attempt %v/%v on %v, error: %v", i+1, r.retries+1, host, err)
+			logger.Error().Msgf("attempt %v/%v on %v, error: %v", i+1, r.attempts, host, err)
 		}
 
 		if err != nil {

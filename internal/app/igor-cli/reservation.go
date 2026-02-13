@@ -738,7 +738,7 @@ func printReservations(rb *common.ResponseBodyReservations) {
 			downNA := ""
 			if installed == "active" {
 				if len(r.HostsPowerNA) > 0 {
-					downNA += cWarning.Sprint(r.HostsPowerNA) + "/"
+					downNA += pUnknown.Sprint(r.HostsPowerNA) + "/"
 				}
 				if len(r.HostsOff) > 0 {
 					downNA += cAlert.Sprint(r.HostsOff)

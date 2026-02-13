@@ -109,7 +109,7 @@ func getSomeData() *common.ResponseBodyShow {
 	h[26].State = strings.ToLower(Reserved)
 	h[27].State = strings.ToLower(Reserved)
 	h[29].State = strings.ToLower(Reserved)
-	//h[29].Powered = "unknown"
+	h[30].Powered = "unknown"
 	// kn21
 	// kn22
 

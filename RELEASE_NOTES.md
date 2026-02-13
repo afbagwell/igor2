@@ -2,9 +2,13 @@
 
 ## v2.3.0
 
+13-February-2026
+
+***This release requires changes to the igor-server.yaml config file. See full documentation for details.***
+
 ### Updates
 
-- Host network status uses internal go TCP alive requests to determine if a host is reachable. This removes the linux utility `nmap` as an external dependency called by the server for the same purpose.
+- Host network status uses internal go TCP alive requests to determine if a host is reachable. This removes the linux utility `nmap` as an external dependency called by the server for the same purpose. 
 - The entire power + connectivity interface has been re-designed to display additional statuses. Nodes now have indicators for powered-on but no network availability and ping-able status but no TCP connectivity. This is covered more extensively in the documentation.
 - Distro names have been appended to the public endpoint for getting a list of active reservations.
 

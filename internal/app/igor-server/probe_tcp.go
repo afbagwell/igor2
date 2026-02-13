@@ -45,7 +45,7 @@ func NewTcpProbe() IHostProbe {
 
 	return &TcpProbe{
 		Ports:      probePorts,
-		Timeout:    3 * time.Second,
+		Timeout:    2 * time.Second,
 		PerDial:    1 * time.Second,
 		MaxWorkers: 64,
 	}

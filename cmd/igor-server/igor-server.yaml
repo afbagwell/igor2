@@ -492,10 +492,14 @@ maintenance:
 # Specifies parameters and commands that igor will use when calling other apps to perform actions on cluster nodes.
 externalCmds:
   # concurrencyLimit (int) - the number of concurrent instances an external command is executed. This is normally
-  # associated with running the same command using a different hostname in the cluster.
+  # associated with running the same command using a different hostname in the cluster. Depending on the size of
+  # your cluster, this value should be set higher to avoid bottlenecks that can occur trying to contact a node
+  # that is having network trouble.
   # Default: 1
   concurrencyLimit:
-  # commandRetries (int) - the number of times an external command will be retried if it reports an error
+
+  # commandRetries (int) - the number of extra times an external command will be re-tried if it reports an error. i.e. The
+  # maximum number of times the command is attempted is '1 + commandRetries'.
   # Default: 0
   commandRetries:
 
@@ -514,4 +518,9 @@ externalCmds:
   # an off command, then on command in sequence instead.
   # Default: (blank)
   powerCycle:
+
+  # powerStatus (string) - the command used to get power status of nodes in the cluster. This is executed as bash command to whichever
+  # service is being used for this purpose.
+  # Default: (blank)
+  powerStatus:
 

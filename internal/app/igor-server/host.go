@@ -121,7 +121,6 @@ func (h *Host) getHostData(powered HostStatus, user *User) common.HostData {
 		hostNetStatus = "up"
 	} else {
 		hostNetStatus = "unknown"
-		logger.Warn().Msgf("node network status not available for '%s'", h.Name)
 	}
 
 	hd := common.HostData{

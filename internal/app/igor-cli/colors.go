@@ -14,7 +14,7 @@ import (
 const (
 	FgUp       = 15  // node is up (white)
 	FgPingable = 214 // node power status unknown (orange)
-	FgPowerNA  = 214 // will be re-mapped with cyan to "powered on only"
+	FgPowerNA  = 240 // will be re-mapped with cyan to "powered on only"
 	FgPowerOff = 1   // node is turned off (red)
 	FgPowered  = 27  // node chassis reports power is on (cyan)
 
@@ -63,7 +63,7 @@ var (
 	pOff        = color.S256(9).AddOpts(color.OpBold)
 	pPing       = color.S256(3).AddOpts(color.OpBold)
 	pOn         = color.S256(27).AddOpts(color.OpBold)
-	pUnknown    = color.S256(3).AddOpts(color.OpBold)
+	pUnknown    = color.S256(240).AddOpts(color.OpBold)
 
 	cRespSuccess = color.FgLightGreen
 	cRespWarn    = color.FgYellow

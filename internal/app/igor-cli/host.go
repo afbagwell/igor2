@@ -53,10 +53,12 @@ optional parameters are provided then all hosts will be returned.
 
 Output will provide the host name, network info and assigned reservations.
 
-In the formatted table output, powered states are designated with symbols:
+In the formatted table output, power/network status is designated with symbols:
 
- ` + pUp.Sprintf("●") + ` : node is up
- ` + pOff.Sprintf("●") + ` : node is down
+ ` + pUp.Sprintf("●") + ` : node is network reachable
+ ` + pPing.Sprintf("●") + ` : node responds to ping
+ ` + pOn.Sprintf("●") + ` : node is powered on
+ ` + pOff.Sprintf("●") + ` : node is powered off
  ` + pUnknown.Sprintf("●") + ` : node power status unavailable
 
 The HOSTNAME column will repeat the NODE column unless a different hostname
