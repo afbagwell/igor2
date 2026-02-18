@@ -145,7 +145,7 @@
     <b-container fluid="true">
       <b-row>
         <b-col class="ml-2 col-sm-auto">
-          <h2 class="font-weight-bold title-brand">Igor 2.2</h2>
+          <h2 class="font-weight-bold title-brand">Igor 2.3</h2>
         </b-col>
         <b-col class="d-flex align-items-center justify-content-center">
           <div v-if="isLoggedIn" class="w-100">
@@ -162,11 +162,27 @@
           </div>
         </b-col>
         <b-col class="mr-3 col-sm-auto" align-v="bottom">
-          <b-navbar v-if="isLoggedIn">
-            <b-navbar-nav
-              class="btn bg-transparent btn-outline-light text-dark buttonfocus"
-            >
-              <b-nav-item-dropdown right>
+          <b-navbar class="justify-content-end">
+            <b-navbar-nav class="align-items-center">
+              <b-nav-text class="mr-3">
+                <b-form-checkbox
+                  v-model="isDarkMode"
+                  switch
+                  class="mb-0 text-dark theme-toggle-control"
+                  :aria-label="isDarkMode ? 'Disable dark mode' : 'Enable dark mode'"
+                  @change="applyThemePreference"
+                >
+                  <b-icon
+                    :icon="isDarkMode ? 'moon-stars-fill' : 'sun-fill'"
+                    :variant="isDarkMode ? 'light' : 'warning'"
+                    aria-hidden="true"
+                  ></b-icon>
+                  <span class="sr-only">
+                    {{ isDarkMode ? "Disable dark mode" : "Enable dark mode" }}
+                  </span>
+                </b-form-checkbox>
+              </b-nav-text>
+              <b-nav-item-dropdown v-if="isLoggedIn" right>
                 <!-- Using 'button-content' slot -->
                 <template #button-content>
                   <span class="text-dark">
@@ -197,6 +213,9 @@
 
 <script>
 import axios from "axios";
+
+const THEME_STORAGE_KEY = "igorweb-theme";
+
 export default {
   data() {
     return {
@@ -211,10 +230,13 @@ export default {
       name: "",
       email: "",
       ldapEnabled: false,
+      isDarkMode: false,
     };
   },
 
   mounted() {
+    this.initializeTheme();
+
     let configUrl = this.$config.IGOR_API_BASE_URL + "/config/public";
     axios.get(configUrl).then((response) => {
       this.ldapEnabled = !response.data.data.igor.localAuthEnabled;
@@ -248,6 +270,18 @@ export default {
     },
   },
   methods: {
+    initializeTheme() {
+      this.isDarkMode = localStorage.getItem(THEME_STORAGE_KEY) === "dark";
+      this.applyThemeClass();
+    },
+    applyThemeClass() {
+      document.documentElement.classList.toggle("theme-dark", this.isDarkMode);
+      document.body.classList.toggle("theme-dark", this.isDarkMode);
+    },
+    applyThemePreference() {
+      localStorage.setItem(THEME_STORAGE_KEY, this.isDarkMode ? "dark" : "light");
+      this.applyThemeClass();
+    },
     logout() {
       this.$store.dispatch("logout").then(() => {
         this.$router.push("/login");

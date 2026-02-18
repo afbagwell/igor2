@@ -31,6 +31,16 @@ button {
   transition: all 0.2s;
 }
 
+html.theme-dark .node-grid {
+  background-color: #1c2532;
+  border: 1px solid #3c4759;
+  color: #e5e9f0;
+}
+
+html.theme-dark .node-grid .btn.buttonfocus {
+  color: #e5e9f0;
+}
+
 .card-list {
   display: grid;
   grid-gap: 0.2em;
@@ -47,6 +57,10 @@ button {
   text-align: center;
   box-sizing: border-box;
   container-type: inline-size;  /* enables cqi sizing for the label */
+}
+
+html.theme-dark .card-list > .list-group-item {
+  border-color: #3c4759;
 }
 
 /* If you wrapped the hostname in <span class="node-name"> */
@@ -66,6 +80,12 @@ button {
  border-radius: 4px;
   padding-left: 3px;
   padding-right: 3px;
+}
+
+html.theme-dark .card-item,
+html.theme-dark .card-available-off,
+html.theme-dark .card-available-unknown {
+  border: 1px solid #5a657a;
 }
 .card-item:hover {
   background-color: grey;
@@ -492,6 +512,16 @@ button {
   background-color: violet;
   color: dimgray;
   font-weight: bold;
+  pointer-events: none;
+}
+
+.card-insterr-displayonly {
+  background-color: red;
+  color: white;
+  font-weight: bold;
+  border-radius: 4px;
+  padding-left: 3px;
+  padding-right: 3px;
   pointer-events: none;
 }
 

@@ -4,13 +4,13 @@ conf/
 .database/
 .jwt/
 cmd/igor-server/igor-server
-cmd/igor-server/__debug_bin
+cmd/igor-server/__debug_bin*
 cmd/igor/igor
-cmd/igor/__debug_bin
+cmd/igor/__debug_bin*
 cmd/igor2/igor2
-cmd/igor2/__debug_bin
+cmd/igor2/__debug_bin*
 cmd/igor-web/igor-web
-cmd/igor-web/__debug_bin
+cmd/igor-web/__debug_bin*
 *.log
 *.log.gz
 scripts/

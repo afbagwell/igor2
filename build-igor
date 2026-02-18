@@ -68,7 +68,7 @@ if [[ "$BUILD_WEB" == true && "$BUILD_CLI" == true && "$BUILD_SERVER" == true ]]
 fi
 
 if ! command -v go version &>/dev/null; then
-   echo "Golang not installed on this machine. Please install v1.23.x (or higher) and try again."
+   echo "Golang not installed on this machine. Please install v1.24.x (or higher) and try again."
    exit
 else
    go_v=$(go version | {
@@ -76,8 +76,8 @@ else
       echo "${v#go}"
    })
    goIN=(${go_v//./ })
-   if [ "${goIN[1]}" -lt 23 ]; then
-      echo "Go version needs a minimum of 1.23.x, found $go_v"
+   if [ "${goIN[1]}" -lt 24 ]; then
+      echo "Go version needs a minimum of 1.24.x, found $go_v"
       exit 1
    else
       echo "Go version found $go_v"

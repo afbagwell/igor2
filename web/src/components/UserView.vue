@@ -337,6 +337,10 @@ export default {
         } else if (this.hostsOtherReserved.includes(element.name)) {
           if (this.hostsUp.includes(element.name)) {
             this.hostsOtherResvPow.push(element.name);
+          } else if (this.hostsOn.includes(element.name)) {
+            this.hostsOtherResvOn.push(element.name);
+          } else if (this.hostsPing.includes(element.name)) {
+            this.hostsOtherResvPing.push(element.name);
           } else if (this.hostsDown.includes(element.name)) {
             this.hostsOtherResvDown.push(element.name);
           } else {
@@ -345,6 +349,10 @@ export default {
         } else if (this.hostsGrpReserved.includes(element.name)) {
           if (this.hostsUp.includes(element.name)) {
             this.hostsGrpResvPow.push(element.name);
+          } else if (this.hostsOn.includes(element.name)) {
+            this.hostsGrpResvOn.push(element.name);
+          } else if (this.hostsPing.includes(element.name)) {
+            this.hostsGrpResvPing.push(element.name);
           } else if (this.hostsDown.includes(element.name)) {
             this.hostsGrpResvDown.push(element.name);
           } else {
@@ -353,6 +361,10 @@ export default {
         } else if (this.hostsBlocked.includes(element.name)) {
           if (this.hostsUp.includes(element.name)) {
             this.hostsBlockedPow.push(element.name);
+          } else if (this.hostsOn.includes(element.name)) {
+            this.hostsBlockedOn.push(element.name);
+          } else if (this.hostsPing.includes(element.name)) {
+            this.hostsBlockedPing.push(element.name);
           } else if (this.hostsDown.includes(element.name)) {
             this.hostsBlockedDown.push(element.name);
           } else {
@@ -364,6 +376,18 @@ export default {
               this.hostsRestrictedDown.push(element.name);
             } else {
               this.hostsAvlDown.push(element.name);
+            }
+          } else if (this.hostsOn.includes(element.name)) {
+            if (element.restricted) {
+              this.hostsRestrictedOn.push(element.name);
+            } else {
+              this.hostsAvlOn.push(element.name);
+            }
+          } else if (this.hostsPing.includes(element.name)) {
+            if (element.restricted) {
+              this.hostsRestrictedPing.push(element.name);
+            } else {
+              this.hostsAvlPing.push(element.name);
             }
           } else if (this.hostsUnknown.includes(element.name)) {
             if (element.restricted) {
@@ -396,15 +420,23 @@ export default {
       this.$store.dispatch("insertHostsOtherResvPing", this.hostsOtherResvPing);
       this.$store.dispatch("insertHostsOtherResvDown", this.hostsOtherResvDown);
       this.$store.dispatch("insertHostsOtherResvUnknown", this.hostsOtherResvUnknown);
+      this.$store.dispatch("insertHostsAvlPing", this.hostsAvlPing);
+      this.$store.dispatch("insertHostsAvlOn", this.hostsAvlOn);
       this.$store.dispatch("insertHostsAvlDown", this.hostsAvlDown);
       this.$store.dispatch("insertHostsAvlUnknown", this.hostsAvlUnknown);
       this.$store.dispatch("insertHostsAvlPow", this.hostsAvlPow);
+      this.$store.dispatch("insertHostsBlockedPing", this.hostsBlockedPing);
+      this.$store.dispatch("insertHostsBlockedOn", this.hostsBlockedOn);
       this.$store.dispatch("insertHostsBlockedDown", this.hostsBlockedDown);
       this.$store.dispatch("insertHostsBlockedUnknown", this.hostsBlockedUnknown);
       this.$store.dispatch("insertHostsBlockedPow", this.hostsBlockedPow);
+      this.$store.dispatch("insertHostsInstErrPing", this.hostsInstErrPing);
+      this.$store.dispatch("insertHostsInstErrOn", this.hostsInstErrOn);
       this.$store.dispatch("insertHostsInstErrDown", this.hostsInstErrDown);
       this.$store.dispatch("insertHostsInstErrUnknown", this.hostsInstErrUnknown);
       this.$store.dispatch("insertHostsInstErrPow", this.hostsInstErrPow);
+      this.$store.dispatch("insertHostsRestrictedPing", this.hostsRestrictedPing);
+      this.$store.dispatch("insertHostsRestrictedOn", this.hostsRestrictedOn);
       this.$store.dispatch("insertHostsRestrictedPow", this.hostsRestrictedPow);
       this.$store.dispatch("insertHostsRestrictedDown", this.hostsRestrictedDown);
       this.$store.dispatch("insertHostsRestrictedUnknown", this.hostsRestrictedUnknown);
@@ -439,16 +471,24 @@ export default {
       this.hostsOtherResvDown = [];
       this.hostsOtherResvUnknown = [];
       this.hostsAvlPow = [];
+      this.hostsAvlPing = [];
+      this.hostsAvlOn = [];
       this.hostsAvlDown = [];
       this.hostsAvlUnknown = [];
+      this.hostsBlockedPing = [];
+      this.hostsBlockedOn = [];
       this.hostsBlockedDown = [];
       this.hostsBlockedUnknown = [];
       this.hostsBlockedPow = [];
       this.hostsBlocked = [];
+      this.hostsInstErrPing = [];
+      this.hostsInstErrOn = [];
       this.hostsInstErrDown = [];
       this.hostsInstErrUnknown = [];
       this.hostsInstErrPow = [];
       this.hostsInstErr = [];
+      this.hostsRestrictedPing = [];
+      this.hostsRestrictedOn = [];
       this.hostsRestrictedPow = [];
       this.hostsRestrictedDown = [];
       this.hostsRestrictedUnknown = [];

@@ -14,6 +14,12 @@ import "./assets/style/general-style.css";
 import "./assets/style/nodegrid-style.css";
 import "./assets/style/style.css";
 
+const THEME_STORAGE_KEY = "igorweb-theme";
+if (localStorage.getItem(THEME_STORAGE_KEY) === "dark") {
+  document.documentElement.classList.add("theme-dark");
+  document.body.classList.add("theme-dark");
+}
+
 Vue.prototype.$http = Axios;
 
 Vue.prototype.$tagUser = false;

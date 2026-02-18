@@ -5,10 +5,11 @@
 package igorcli
 
 import (
+	"regexp"
+
 	"github.com/gookit/color"
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/jedib0t/go-pretty/v6/text"
-	"regexp"
 )
 
 const (
@@ -35,7 +36,7 @@ var (
 
 	cUnreservedUp      = color.S256(FgUp, BgUnreserved)
 	cUnreservedDown    = color.S256(FgPowerOff, BgUnreserved).AddOpts(color.OpBold)
-	cUnreservedPowerNA = color.S256(FgPowerNA, BgUnreserved).AddOpts(color.OpBold)
+	cUnreservedPowerNA = color.S256(248, FgPowerNA).AddOpts(color.OpBold)
 	cInstError         = color.S256(FgUp, BgError).AddOpts(color.OpBold)
 	cBlockedUp         = color.S256(FgUp, BgBlocked).AddOpts(color.OpBold)
 	cRestrictedUp      = color.S256(FgUp, BgRestricted)

@@ -22,8 +22,8 @@
         <b-collapse id="nodeLegend" class="mt-2 w-100">
           <div class="legend">
             <div class="legend-section">
-              <div class="legend-title text-uppercase font-weight-bold">
-                Reservation / availability
+              <div class="legend-title font-weight-bold">
+                RESERVATION / AVAILABILITY (background)
               </div>
               <b-row class="mt-2">
                 <b-col
@@ -48,8 +48,8 @@
             </div>
 
             <div class="legend-section mt-3">
-              <div class="legend-title text-uppercase font-weight-bold">
-                Node readiness (power + connectivity)
+              <div class="legend-title font-weight-bold">
+                POWER + CONNECTIVITY (foreground)
               </div>
               <b-row class="mt-2">
                 <b-col
@@ -156,6 +156,20 @@ export default {
           desc: 'Node can be reserved by anyone.',
         },
         {
+          key: 'blocked',
+          swatchClass: 'card-blocked-up',
+          swatchText: 'Blocked',
+          label: 'Blocked',
+          desc: 'Node cannot be reserved. Current reservation persists until expiry. No ETA for return.',
+        },
+        {
+          key: 'restricted',
+          swatchClass: 'card-restricted-up',
+          swatchText: 'Restr.',
+          label: 'Restricted',
+          desc: 'Node can only be reserved by certain users/groups or during a set time window. Only shown if you are not eligible.',
+        },
+        {
           key: 'reserved',
           swatchClass: 'card-reserved-up',
           swatchText: 'Reserved',
@@ -177,25 +191,11 @@ export default {
           desc: 'Node is currently reserved by another user or group.',
         },
         {
-          key: 'blocked',
-          swatchClass: 'card-blocked-up',
-          swatchText: 'Blocked',
-          label: 'Blocked',
-          desc: 'Node is removed from the reservable pool. Existing reservations may complete. No ETA for return.',
-        },
-        {
-          key: 'restricted',
-          swatchClass: 'card-restricted-up',
-          swatchText: 'Restr.',
-          label: 'Restricted',
-          desc: 'Node can only be reserved by certain users/groups or during a time window. Only shown if you are not eligible.',
-        },
-        {
           key: 'insterr',
-          swatchClass: 'card-insterr-on',
+          swatchClass: 'card-insterr-displayonly',
           swatchText: 'Inst Err',
           label: 'Install error',
-          desc: 'Startup failed during an active reservation. Will not show readiness as Up.',
+          desc: 'Startup failed during an active reservation. Will not show readiness as Up/Ready.',
         },
       ],
 
@@ -215,25 +215,25 @@ export default {
           desc: 'Node has power but no network connectivity.',
         },
         {
-          key: 'ping',
-          icon: 'circle-fill',
-          color: 'gold',
-          label: 'Ping',
-          desc: 'Node has power and responds to ICMP ping (not yet login-ready).',
+          key: 'unknown',
+          icon: 'question-circle-fill',
+          color: 'dimgray',
+          label: 'Unknown',
+          desc: 'Power status could not be obtained.',
         },
         {
           key: 'up',
           icon: 'circle-fill',
           color: 'white',
           label: 'Up / Ready',
-          desc: 'Node responds to TCP keepalive (login-ready).',
+          desc: 'Node responds to TCP requests (login-ready).',
         },
         {
-          key: 'unknown',
-          icon: 'question-circle-fill',
-          color: 'dimgray',
-          label: 'Unknown',
-          desc: 'No data available.',
+          key: 'ping',
+          icon: 'circle-fill',
+          color: 'gold',
+          label: 'Ping',
+          desc: 'Node responds only to ICMP ping (not yet login-ready).',
         },
       ],
 
@@ -257,7 +257,7 @@ export default {
           className: 'card-insterr-ping',
           icon: 'circle-fill',
           label: 'Install error + Ping',
-          desc: 'Reservation startup failed; node may still respond to ping.',
+          desc: 'Reservation startup failed; node responds to ping.',
         },
       ],
     };
@@ -274,7 +274,7 @@ export default {
 
     onHover(index){
       var selectedNodes = [];
-      // create an array with all numbers betwen clickedNodeID and lastClickedNodeID
+      // create an array with all numbers between clickedNodeID and lastClickedNodeID
       let minNodeID = Math.min(index, this.lastClickedNode);
       let maxNodeID = Math.max(index, this.lastClickedNode);
       let nodesInRange = Array.from(Array(maxNodeID - minNodeID + 1), (_, i) => i + minNodeID);
@@ -298,7 +298,7 @@ export default {
 
     hostClick(clickedNode) {
       var selectedNodes = [];
-      // create an array with all numbers betwen clickedNodeID and lastClickedNodeID
+      // create an array with all numbers between clickedNodeID and lastClickedNodeID
       let minNodeID = Math.min(clickedNode, this.lastClickedNode);
       let maxNodeID = Math.max(clickedNode, this.lastClickedNode);
       let nodesInRange = Array.from(Array(maxNodeID - minNodeID + 1), (_, i) => i + minNodeID);
@@ -592,5 +592,15 @@ export default {
   font-weight: bold;
   user-select: none;
   pointer-events: none;
+}
+
+html.theme-dark .legend-title,
+html.theme-dark .legend-section .font-weight-bold {
+  color: #f1f5fb;
+}
+
+html.theme-dark .legend-desc,
+html.theme-dark .legend-note {
+  color: #c1cad8;
 }
 </style>

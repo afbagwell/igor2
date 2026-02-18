@@ -26,16 +26,17 @@ import (
 )
 
 const (
-	Up         = "UP"
-	Off        = "OFF"
-	On         = "ON"
-	Ping       = "PING"
-	PowerNA    = "POWER-N/A"
-	Blocked    = "BLOCKED"
-	Reserved   = "RESERVED"
-	Unreserved = "UNRESERVED"
-	Restricted = "RESTRICTED"
-	InstallErr = "INST ERROR"
+	Up           = "UP"
+	Off          = "OFF"
+	On           = "ON"
+	Ping         = "PING"
+	PowerUnknown = "UNKNOWN"
+	PowerNA      = "POWER-N/A"
+	Blocked      = "BLOCKED"
+	Reserved     = "RESERVED"
+	Unreserved   = "UNRESERVED"
+	Restricted   = "RESTRICTED"
+	InstallErr   = "INST ERROR"
 )
 
 func newShowCmd() *cobra.Command {
@@ -445,12 +446,16 @@ func printShow(rb *common.ResponseBodyShow, flagset *pflag.FlagSet) {
 	var unreservedNodes []string
 	var blockedNodes []string
 	var restrictedNodes []string
+	var powerUnknownNodes []string
 
 	for i := 0; i < len(showData.Hosts); i++ {
 		h := &showData.Hosts[i]
 		if h.Restricted {
 			restrictedNodes = append(restrictedNodes, h.Name)
 			restrictMap[h.SequenceID] = true
+		}
+		if h.Powered == strings.ToLower(PowerUnknown) {
+			powerUnknownNodes = append(powerUnknownNodes, h.Name)
 		}
 		if h.State == strings.ToLower(Blocked) {
 			blockedNodes = append(blockedNodes, h.Name)
@@ -520,6 +525,10 @@ func printShow(rb *common.ResponseBodyShow, flagset *pflag.FlagSet) {
 
 	if len(restrictedNodes) > 0 {
 		makeNodeRow(restrictedNodes, cRestrictedUp, Restricted)
+	}
+
+	if len(powerUnknownNodes) > 0 {
+		makeNodeRow(powerUnknownNodes, cUnreservedPowerNA, PowerNA)
 	}
 
 	if len(installErrorNodes) > 0 {

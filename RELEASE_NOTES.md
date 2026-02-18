@@ -1,5 +1,20 @@
 # Release Notes
 
+## v2.3.1
+
+17-February-2026
+
+### Updates
+- Igorweb has a dark mode! Toggle setting is remembered by the browser.
+- CLI calls out nodes with no power status in break-out node summary.
+- Security updates to crypto, net and xz package dependencies.
+- Bump minimum required Golang to v1.24
+
+### Fixes
+
+- Fix proper display of on and ping statuses in group res, blocked and restricted nodes.
+- Minor color and wording fixes to igorweb banner and legend text.
+
 ## v2.3.0
 
 13-February-2026
@@ -14,7 +29,7 @@
 
 ### Fixes
 
-- Fixed a interval timer issue where the notification manager could fill up the log with DEBUG messages when the clock shifted back to Standard Time.
+- Fixed an interval timer issue where the notification manager could fill up the log with DEBUG messages when the clock shifted back to Standard Time.
 - Fixed an issue where adding a new node to the cluster would freeze the node status as unknown and would require a server restart to get the status unstuck.
 - Numerous small fixes to igorweb.
 
@@ -47,7 +62,7 @@
 - The igor sync command can now operate on a specific set of hosts.
 - Updated db-migrate tool to migrate Igor databases from previous versions to this one.
 - Bump minimum required Golang to v1.23.x
-- Bump minimum nodeJS to v22.x and npm to v10.x to build Igorweb.
+- Bump minimum Node.js to v22.x and npm to v10.x to build Igorweb.
 - Security package updates.
 
 ### Fixes

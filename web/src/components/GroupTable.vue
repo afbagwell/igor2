@@ -291,11 +291,28 @@
                   :total-rows="totalRows"
                   v-model="currentPage"
                   :per-page="perPage"
+                  label-first-page="First page"
+                  label-prev-page="Previous page"
+                  label-next-page="Next page"
+                  label-last-page="Last page"
                   class="my-0"
                   size="sm"
                   align="fill"
                   aria-controls="my-table"
-                ></b-pagination>
+                >
+                  <template #first-text>
+                    <b-icon icon="skip-backward-fill" aria-hidden="true"></b-icon>
+                  </template>
+                  <template #prev-text>
+                    <b-icon icon="caret-left-fill" aria-hidden="true"></b-icon>
+                  </template>
+                  <template #next-text>
+                    <b-icon icon="caret-right-fill" aria-hidden="true"></b-icon>
+                  </template>
+                  <template #last-text>
+                    <b-icon icon="skip-forward-fill" aria-hidden="true"></b-icon>
+                  </template>
+                </b-pagination>
               </b-col>
             </b-row>
           </b-tab>
