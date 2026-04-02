@@ -182,3 +182,67 @@ func getPublicShowData() (publicData string, code int, err error) {
 
 	return
 }
+
+func publicGroupMembersHandler(w http.ResponseWriter, r *http.Request) {
+
+	clog := hlog.FromRequest(r)
+	actionPrefix := "public group data"
+	status := http.StatusOK
+	var err error
+	var publicGroupData string
+
+	queryParams := r.URL.Query()
+	groupName := queryParams.Get("name")
+
+	if groupName != GroupAdmins && groupName != GroupAll && igor.Server.AllowPublicShow {
+		publicGroupData, status, err = getPublicGroupData(groupName)
+	} else {
+		status = http.StatusForbidden
+		err = fmt.Errorf("%s has restricted igor reservation data from public view", igor.InstanceName)
+	}
+
+	if err != nil {
+		if status >= http.StatusInternalServerError {
+			clog.Error().Msgf("%s error - %v", actionPrefix, err)
+		} else {
+			clog.Warn().Msgf("%s failed - %v", actionPrefix, err)
+		}
+		publicGroupData = fmt.Sprintf("Status: %d\n%v\n", status, err)
+	} else {
+		clog.Debug().Msgf("%s success", actionPrefix)
+	}
+
+	w.Header().Set(common.ContentType, common.MTextPlain)
+	w.WriteHeader(status)
+	if _, err = w.Write([]byte(publicGroupData)); err != nil {
+		panic(err)
+	}
+}
+
+func getPublicGroupData(groupName string) (memberList string, code int, err error) {
+
+	code = http.StatusOK // default status, overridden at end if no errors
+
+	queryGroupMembers := map[string]interface{}{"name": groupName, "showMembers": true}
+
+	groupList, gErr := dbReadGroupsTx(queryGroupMembers, true)
+	if gErr != nil {
+		err = gErr
+		code = http.StatusInternalServerError
+		return
+	} else {
+
+		if len(groupList) == 0 {
+			err = fmt.Errorf("group not found")
+			code = http.StatusBadRequest
+			return
+		}
+
+		for _, g := range groupList {
+			members := userNamesOfUsers(g.Members)
+			memberList = strings.Join(members, ",") + "\n"
+		}
+	}
+
+	return
+}

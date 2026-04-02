@@ -1,10 +1,23 @@
 # Release Notes
 
+## v2.3.2
+
+02-April-2026
+
+### Updates
+
+- Public endpoint extended with group membership query.
+
+### Fixes
+
+- Took out sections in CLI help text that were no longer relevant.
+
 ## v2.3.1
 
 17-February-2026
 
 ### Updates
+
 - Igorweb has a dark mode! Toggle setting is remembered by the browser.
 - CLI calls out nodes with no power status in break-out node summary.
 - Security updates to crypto, net and xz package dependencies.

@@ -50,10 +50,11 @@ parameter localBoot = true and a breed.
 func newImageRegisterCmd() *cobra.Command {
 
 	cmdRegisterImage := &cobra.Command{
-		Use: "register {-k FILENAME.KERNEL -i FILENAME.INITRD |\n" +
-			"       --kstaged FILENAME.KERNEL --istaged FILENAME.INITRD |\n" +
-			"       --boot {bios,uefi}\n" +
-			"       [-l --localBoot {true|false} -b --breed BREED]\n",
+		Use: "register (-k FILENAME.KERNEL -i FILENAME.INITRD |\n"+
+             "       --kstaged FILENAME.KERNEL --istaged FILENAME.INITRD)\n"+
+             "       --boot BOOTMODES\n"+
+             "       [-l|--localBoot {true|false}]\n"+
+             "       [-b|--breed BREED]",
 		Short: "Register image files or distro",
 		Long: `
 Registers bootable file(s) (ex. a kernel/initrd file pair) with igor. This
@@ -62,22 +63,22 @@ command is used when uploading is not enabled for users.
 ` + requiredFlags + `
 
   -k : name/path to the kernel file. If including a distro for local boot,
-		include the kernel file name if using a custom name. Otherwise,
-		Igor will look for a default name based on OS breed.
+		include the kernel file name if using a custom name. Otherwise, Igor
+		will look for a default name based on OS breed.
   -i : name/path to the initrd file. If including a distro for local boot,
-  		include the initrd file name if using a custom name. Otherwise,
-  		Igor will look for a default name based on OS breed.
-  --boot: at least one or more comma-separated strings indicating this 
-  		image's compatible boot methods. Available values are: bios,uefi
+  		include the initrd file name if using a custom name. Otherwise, Igor
+		will look for a default name based on OS breed.
+  --boot: at least one or more comma-separated strings indicating this image's
+          compatible boot modes.
+          Available values are: bios,uefi
 
 ` + optionalFlags + `
 
   -l : true if included, designate the image for local boot
   -b : breed of image. (Required if local boot flag -l is included)
-  		Available values are:
-  		debian, freebsd, generic, nexenta,
-		redhat, suse, ubuntu, unix, vmware
-		windows, xen
+       Available values are:
+         debian, freebsd, generic, nexenta, redhat, suse,
+         ubuntu, unix, vmware, windows, xen
 
 On success, the admin will receive a reference ID. It can be used by anyone to
 create a distro:

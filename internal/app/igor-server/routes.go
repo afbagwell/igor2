@@ -38,6 +38,8 @@ func applyCbRoutes(router *httprouter.Router) {
 	routes = append(routes, fmt.Sprintf("        -> %s %s", http.MethodGet, api.CbInfo))
 	router.Handle(http.MethodGet, api.Public, hcCb.ApplyTo(publicShowHandler))
 	routes = append(routes, fmt.Sprintf("        -> %s %s", http.MethodGet, api.Public))
+	router.Handle(http.MethodGet, api.PublicGroupMembers, hcCb.ApplyTo(publicGroupMembersHandler))
+	routes = append(routes, fmt.Sprintf("        -> %s %s", http.MethodGet, api.PublicGroupMembers))
 	logger.Debug().Msgf("registered node callback routes:\n%s", strings.Join(routes, "\n"))
 	router.ServeFiles(api.CbKS+"/*filepath", http.Dir(filepath.Join(igor.TFTPPath, igor.KickstartDir)))
 	router.ServeFiles(api.CbScript+"/*filepath", http.Dir(igor.Server.ScriptDir))
@@ -58,6 +60,11 @@ func applyApiRoutes(router *httprouter.Router) {
 	hcPublicShow.Extend(hcDefaultChain)
 	router.Handle(http.MethodGet, api.Public, hcPublicShow.ApplyTo(publicShowHandler))
 	routes = append(routes, fmt.Sprintf("        -> %s %s", http.MethodGet, api.Public))
+
+	hcPublicGroupMembers := NewHandlerChain()
+	hcPublicGroupMembers.Extend(hcDefaultChain)
+	router.Handle(http.MethodGet, api.PublicGroupMembers, hcPublicGroupMembers.ApplyTo(publicGroupMembersHandler))
+	routes = append(routes, fmt.Sprintf("        -> %s %s", http.MethodGet, api.PublicGroupMembers))
 
 	hcSettings := NewHandlerChain()
 	hcSettings.Extend(hcDefaultChain)

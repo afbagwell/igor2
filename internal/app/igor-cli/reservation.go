@@ -355,11 +355,7 @@ multi-node range (kn[3,16-20,34]).
 
 Drop allows reservation owners and admins to free up nodes without deleting the
 reservation. This might be a necessity if a node has to be taken offline due to
-failure. ` + sItalic("This is a permanent change. Once dropped a node cannot be added back.") + `
-Assuming you can re-reserve the dropped node, one potential workaround would be
-to provide the new reservation's vlan param with the name of the old reserva-
-tion so the node can re-join its prior virtual network. See 'igor res create'
-for more info.
+failure or other hardware-related issues.
 
 This flag cannot be used to drop all nodes. Delete the reservation instead.
 
