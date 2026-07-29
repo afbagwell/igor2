@@ -71,6 +71,24 @@ format arguments. Covered by `TestPrintMotdPreservesPercentSign` in
 marker, for both the urgent and non-urgent styles. The test was confirmed to
 fail against the original code.
 
+Additionally confirmed live against a DEVMODE server, setting the MOTD through
+`igor cluster motd` and running `igor show` with a CLI built at `3ea340e` (before
+the fix) and at `0f23ca6` (after), against the same data:
+
+```
+MOTD set to: "Downtime Saturday, 80% of nodes affected"
+  before:  MOTD: Downtime Saturday, 80%!o(MISSING)f nodes affected
+  after:   MOTD: Downtime Saturday, 80% of nodes affected
+
+MOTD set to: "URGENT: cluster running at 100%"   (-u)
+  before:  MOTD: URGENT: cluster running at 100%!
+           (MISSING)
+  after:   MOTD: URGENT: cluster running at 100%
+```
+
+Note the second case: a trailing `%` split the notice across two lines, so the
+damage was not limited to substituting characters.
+
 ---
 
 ## BUG-002 — A `%` in the `duration` query param yields a mangled error message
@@ -118,6 +136,18 @@ Now uses `errors.New(msg)` and `Msg(msg)`. Covered by
 which exercises the rejection paths only — a valid duration proceeds to a
 database transaction, which the test deliberately avoids. The test was confirmed
 to fail against the original code.
+
+Additionally confirmed live against a DEVMODE server, which now returns the
+offending value verbatim:
+
+```
+GET /igor/stats?duration=50%25       -> "error converting string 50% to int"
+GET /igor/stats?duration=abc%25def   -> "error converting string abc%def to int"
+```
+
+Reachable only by calling the API directly. The CLI's `igor stats -d` validates
+its argument and never forwards a non-integer, which is why this went unnoticed
+in normal use.
 
 ---
 
@@ -223,5 +253,6 @@ are not re-investigated.
 |---|---|---|---|
 | 1.0 | 2026-07-29 | Claude | Initial tracker; BUG-001, BUG-002, BUG-003 |
 | 1.1 | 2026-07-29 | Claude | BUG-001, BUG-002, BUG-003 marked fixed with commit refs and resolution notes |
+| 1.2 | 2026-07-29 | Claude | Added live before/after verification of BUG-001 and BUG-002 against a DEVMODE server |
 </content>
 </invoke>
