@@ -7,15 +7,15 @@ exotic-circumstance concerns are **not** recorded here.
 
 | ID | Status | Component | Severity | Summary |
 |---|---|---|---|---|
-| BUG-001 | open | cli | medium | A `%` in the cluster MOTD corrupts `igor show` output for every user |
-| BUG-002 | open | core | low | A `%` in the `duration` query param yields a mangled stats error message |
-| BUG-003 | open | core, cli | medium | 40 non-constant format-string call sites; blocks `go test ./...` |
+| BUG-001 | fixed (`0f23ca6`) | cli | medium | A `%` in the cluster MOTD corrupts `igor show` output for every user |
+| BUG-002 | fixed (`3ea340e`) | core | low | A `%` in the `duration` query param yields a mangled stats error message |
+| BUG-003 | fixed (`594ee54`) | core, cli | medium | 40 non-constant format-string call sites; blocks `go test ./...` |
 
 ---
 
 ## BUG-001 — A `%` in the cluster MOTD corrupts `igor show` output
 
-**Status:** open · **Component:** cli · **Severity:** medium
+**Status:** fixed in `0f23ca6` · **Component:** cli · **Severity:** medium
 **Found:** 2026-07-29 · **Version:** v2.3.2
 
 ### Location
@@ -62,16 +62,20 @@ the mangling eats meaningful text (`"50% capacity"` → `"50%!c(MISSING)apacity"
 No crash, no data loss — cosmetic but user-visible on a cluster-wide notice, and
 silently misinforms users about the very thing the MOTD exists to communicate.
 
-### Fix direction
+### Resolution
 
-Use `Print`, not `Printf`, when the string carries no format arguments:
-`cMotdUrgent.Print(finalMotd)`. Same for the sibling call at line 876.
+Both calls now use `Print` rather than `Printf`, since the string carries no
+format arguments. Covered by `TestPrintMotdPreservesPercentSign` in
+`internal/app/igor-cli/show_test.go`, which captures output via
+`color.SetOutput` and asserts the MOTD appears verbatim with no failed-verb
+marker, for both the urgent and non-urgent styles. The test was confirmed to
+fail against the original code.
 
 ---
 
 ## BUG-002 — A `%` in the `duration` query param yields a mangled error message
 
-**Status:** open · **Component:** core · **Severity:** low
+**Status:** fixed in `3ea340e` · **Component:** core · **Severity:** low
 **Found:** 2026-07-29 · **Version:** v2.3.2
 
 ### Location
@@ -107,17 +111,19 @@ harmless beyond the confusing text. The neighbouring `d < 0` branch
 is *not* reachable with a `%`, since `d` is already an `int` — it is covered by
 BUG-003 as hygiene, not as a live defect.
 
-### Fix direction
+### Resolution
 
-`errors.New(msg)` instead of `fmt.Errorf(msg)`, and `Msg(msg)` instead of
-`Msgf(msg)`. Alternatively build the error once with `fmt.Errorf("... %v ...", v[0])`
-and log that.
+Now uses `errors.New(msg)` and `Msg(msg)`. Covered by
+`TestRunStatsRejectsBadDuration` in `internal/app/igor-server/stats_test.go`,
+which exercises the rejection paths only — a valid duration proceeds to a
+database transaction, which the test deliberately avoids. The test was confirmed
+to fail against the original code.
 
 ---
 
 ## BUG-003 — 40 non-constant format-string call sites block `go test ./...`
 
-**Status:** open · **Component:** core, cli · **Severity:** medium
+**Status:** fixed in `3ea340e`, `0f23ca6`, `594ee54` · **Component:** core, cli · **Severity:** medium
 **Found:** 2026-07-29 · **Version:** v2.3.2
 
 ### Symptom
@@ -159,18 +165,40 @@ remainder are latent — they only misbehave if a `%` reaches them.
   pre-commit rule are effectively bypassed or silenced.
 - Each site is a latent output-corruption bug of the BUG-001 kind.
 
-### Fix direction
+### Resolution
 
-Mechanical, per call site — no rule weakening, no `//nolint`:
+Fixed mechanically at each call site — no rule weakening, no `//nolint`:
 
 - `Msgf(s)` → `Msg(s)`
 - `fmt.Errorf(s)` → `errors.New(s)`
 - `fmt.Printf(s)` → `fmt.Print(s)`
 - `Sprintf(s)` → `Sprint(s)`, `Printf(s)` → `Print(s)`
 
-Where the intent really was formatting, pass the arguments properly rather than
-pre-building the string. Verify with `go vet ./...` clean and `go test ./...`
-green without `-vet=off`.
+`Sprint` and `Sprintf` are not interchangeable in general: for an **empty**
+argument `Sprintf` returns `""` while `Sprint` emits bare escape codes, because
+they route through `RenderString` and `RenderCode` respectively. Every affected
+site passes a provably non-empty string, so the substitution is safe — but the
+distinction matters if this pattern reappears.
+
+Landed in three commits, split by component: `3ea340e` (igor-server, 23 sites),
+`0f23ca6` (igor-cli, 17 sites), `594ee54` (igor-web, 1 site).
+
+Verified: `go build ./...`, `go vet ./...`, and `go test ./...` — the last
+**without** `-vet=off` — all pass, under both the default and `DEVMODE` build
+tags.
+
+### One further site vet cannot see
+
+`cluster_create.go:87` concatenated a cluster name ahead of real format verbs:
+
+```go
+clog.Info().Msgf(cName+": updated cluster display dimensions to w=%d h=%d", ...)
+```
+
+The printf analyzer only reports a non-constant format string when **no**
+arguments are supplied, so this form is invisible to it — yet it fails the same
+way if `cName` contains a `%`. Rewritten to pass `cName` as an argument. A repo
+grep for the same shape found no other instances.
 
 ---
 
@@ -194,5 +222,6 @@ are not re-investigated.
 | Version | Date | Author | Change |
 |---|---|---|---|
 | 1.0 | 2026-07-29 | Claude | Initial tracker; BUG-001, BUG-002, BUG-003 |
+| 1.1 | 2026-07-29 | Claude | BUG-001, BUG-002, BUG-003 marked fixed with commit refs and resolution notes |
 </content>
 </invoke>
