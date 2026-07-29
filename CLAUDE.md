@@ -169,4 +169,4 @@ code, or code not reflected in the docs. Run ad hoc, not on a schedule.
 
 | Version | Date | Author | Change |
 |---|---|---|---|
-| 1.0 | «YYYY-MM-DD» | «author» | Initial baseline from current checkout of version v2.3.2 |
+| 1.0 | 2026-07-29 | Allen Bagwell | Initial baseline from current checkout of version v2.3.2 |
