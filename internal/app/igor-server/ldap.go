@@ -3,14 +3,16 @@ package igorserver
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"errors"
 	"fmt"
-	"github.com/go-ldap/ldap/v3"
-	"golang.org/x/crypto/bcrypt"
-	"gorm.io/gorm"
 	"igor2/internal/pkg/common"
 	"os"
 	"regexp"
 	"slices"
+
+	"github.com/go-ldap/ldap/v3"
+	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 )
 
 func syncPreCheck() error {
@@ -100,7 +102,7 @@ func getLDAPConnection() (*ldap.Conn, error) {
 			ldapCert, rfErr := os.ReadFile(ldapConf.TLSConfig.Cert)
 			if rfErr != nil {
 				e := fmt.Sprintf("%s failed - failed to read added cert: %v", actionPrefix, rfErr)
-				return nil, fmt.Errorf(e)
+				return nil, errors.New(e)
 			}
 			ok := rootCA.AppendCertsFromPEM(ldapCert)
 			if !ok {

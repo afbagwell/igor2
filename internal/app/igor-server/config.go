@@ -648,7 +648,7 @@ func initConfigCheck() {
 			for _, x := range ResNotifyTimes {
 				temp = append([]string{common.FormatDuration(x, false)}, temp...)
 			}
-			logger.Info().Msgf("reservation notification times are: " + strings.Join(temp, ","))
+			logger.Info().Msg("reservation notification times are: " + strings.Join(temp, ","))
 		}
 	}
 
