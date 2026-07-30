@@ -87,6 +87,26 @@ func (e *MissingParamError) Error() string {
 	return fmt.Sprintf("required parameter '%s' not found", e.paramName)
 }
 
+// NoEmailRecipientError is returned when an outbound notification resolves to zero
+// usable addresses. This is permanent for the message in hand -- the addresses were
+// absent or unparseable, not temporarily unreachable -- so callers should treat it as a
+// reason to stop rather than to retry.
+type NoEmailRecipientError struct {
+	subject string
+}
+
+// NewNoEmailRecipientError is used when an email has no address left to send to after
+// empty and whitespace-only entries are discarded.
+func NewNoEmailRecipientError(subject string) *NoEmailRecipientError {
+	return &NoEmailRecipientError{
+		subject: subject,
+	}
+}
+
+func (e *NoEmailRecipientError) Error() string {
+	return fmt.Sprintf("no usable recipient address for outbound email, subject: %s", e.subject)
+}
+
 // FileAlreadyExistsError is invoked when attempting to save
 // a file to a path where a file of the same name already exists
 type FileAlreadyExistsError struct {

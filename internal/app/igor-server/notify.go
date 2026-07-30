@@ -7,6 +7,7 @@ package igorserver
 import (
 	"bytes"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"html/template"
 	"strings"
@@ -575,7 +576,7 @@ func processResNotifyEvent(msg ResNotifyEvent) error {
 	}
 
 	if strings.HasPrefix(msg.Res.Group.Name, GroupUserPrefix) {
-		toList = append(toList, msg.Res.Owner.Email)
+		addEmailToList(&toList, msg.Res.Owner.Email)
 	} else {
 		queryParams := map[string]interface{}{"name": msg.Res.Group.Name, "showMembers": true}
 		if group, err := dbReadGroupsTx(queryParams, true); err != nil {
@@ -596,13 +597,25 @@ func processResNotifyEvent(msg ResNotifyEvent) error {
 		}
 	}
 
+	sent := true
 	if err := sendEmail(t, subj, toList, ccList, nil, priority, msg); err != nil {
-		return err
+		var noRcpt *NoEmailRecipientError
+		if !errors.As(err, &noRcpt) {
+			return err
+		}
+		// Nobody attached to this reservation has an address on file, which no amount of
+		// retrying will change. Fall through so a warning type still records its
+		// NextNotify below -- leaving it unchanged makes the scheduler re-queue this same
+		// warning at the top of every minute until the reservation ends.
+		logger.Warn().Msgf("%v (reservation '%s')", err, msg.Res.Name)
+		sent = false
 	}
 
 	if msg.Type == EmailResWarn || msg.Type == EmailResFinalWarn {
 
-		logger.Info().Msgf("res expire warning sent to members of reservation '%s'", msg.Res.Name)
+		if sent {
+			logger.Info().Msgf("res expire warning sent to members of reservation '%s'", msg.Res.Name)
+		}
 
 		dbAccess.Lock()
 		defer dbAccess.Unlock()
@@ -633,8 +646,18 @@ func addEmailToList(mList *[]string, addr string) {
 
 func sendEmail(t *template.Template, subject string, toList []string, ccList []string, bccList []string, isPriority bool, mInfo ...interface{}) error {
 
+	// Normalize before counting. dedupeEmailList discards empty and whitespace-only
+	// entries, so a list that looks populated here can still hold no usable address --
+	// a user with no email on file contributes "" to the list. Counting the raw lists
+	// let those through to gomail as a recipient header with nothing in it, which sends
+	// MAIL FROM and then DATA with no RCPT TO in between and draws a 503 5.5.2 from the
+	// server.
+	toList = dedupeEmailList(toList)
+	ccList = dedupeEmailList(ccList)
+	bccList = dedupeEmailList(bccList)
+
 	if len(toList) == 0 && len(ccList) == 0 && len(bccList) == 0 {
-		return fmt.Errorf("no recipient address for outbound email, subject: %v", subject)
+		return NewNoEmailRecipientError(subject)
 	}
 	// Settings for SMTP server
 	d := gomail.NewDialer(igor.Email.SmtpServer, igor.Email.SmtpPort, igor.Email.SmtpUsername, igor.Email.SmtpPassword)
@@ -651,17 +674,14 @@ func sendEmail(t *template.Template, subject string, toList []string, ccList []s
 			m.SetHeader("Reply-To", igor.Email.ReplyTo)
 		}
 		m.SetHeader("Subject", subject)
-		if len(toList) == 0 && len(ccList) == 0 && len(bccList) == 0 {
-			return fmt.Errorf("composed email had no recipients")
-		}
 		if len(toList) > 0 {
-			m.SetHeader("To", dedupeEmailList(toList)...)
+			m.SetHeader("To", toList...)
 		}
 		if len(ccList) > 0 {
-			m.SetHeader("Cc", dedupeEmailList(ccList)...)
+			m.SetHeader("Cc", ccList...)
 		}
 		if len(bccList) > 0 {
-			m.SetHeader("Bcc", dedupeEmailList(bccList)...)
+			m.SetHeader("Bcc", bccList...)
 		}
 		if isPriority {
 			m.SetHeader("X-Priority", "1 (Highest)")
@@ -678,11 +698,9 @@ func sendEmail(t *template.Template, subject string, toList []string, ccList []s
 		msgs = append(msgs, m)
 	}
 
-	if mailErr := d.DialAndSend(msgs...); mailErr != nil {
-		logger.Error().Msgf("%v", mailErr)
-		return mailErr
-	}
-	return nil
+	// callers log what they get back, so returning is enough -- logging here too is what
+	// made every send failure appear in the log twice
+	return d.DialAndSend(msgs...)
 }
 
 func dedupeEmailList(emailList []string) []string {
