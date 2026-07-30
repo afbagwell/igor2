@@ -1,6 +1,6 @@
 # Igor Bug Tracker
 
-**Version:** 1.8
+**Version:** 1.9
 
 Index and progress tracker for concrete, reproducible defects found during code
 analysis. Hypothetical or exotic-circumstance concerns are **not** recorded here.
@@ -102,3 +102,4 @@ are not re-investigated.
 | 1.6 | 2026-07-30 | Claude | Added BUG-004 (fixed), and BUG-005 and BUG-006 (open) found while investigating it; recorded the BUG-004/BUG-005 relationship |
 | 1.7 | 2026-07-30 | Claude | BUG-005 marked fixed; corrected the claim in BUG-004 and BUG-005 that gomail rejects a bad address before connecting — `DialAndSend` dials first, then parses recipients |
 | 1.8 | 2026-07-30 | Claude | BUG-006 marked fixed; added BUG-007, a second nil-template server panic found while fixing it, and recorded the BUG-006/BUG-007 relationship |
+| 1.9 | 2026-07-30 | Allen Bagwell, Claude | Recorded live production verification of BUG-004 (cause and retry loop both confirmed; delivered mail was `EmailResWarn`) and of BUG-005's preconditions, whose failure remains unobserved |
