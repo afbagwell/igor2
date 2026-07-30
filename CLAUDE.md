@@ -1,6 +1,6 @@
-# CLAUDE.md — Igor 
+# CLAUDE.md — Igor
 
-**Version:** 1.0
+**Version:** 1.1
 
 This file is auto-loaded by Claude Code in every conversation. Read it in full before writing, modifying, or reviewing any code. All work is held to the highest standard of correctness, security, documentation, and testability.
 
@@ -12,28 +12,114 @@ Igor is a node reservation manager for clusters that host ad-hoc multi-user/mult
 
 Users can also create groups that share access to reservation management. Administrators can fine-tune reservation creation and resource access across a wide variety of settings from open and permissive to regulated and tightly controlled.
 
-project github URL: https://github.com/sandia-minimega/igor2
-online documentation: https://www.sandia.gov/igor/documentation/ 
+Official project github URL: https://github.com/sandia-minimega/igor2
+Project fork URL where this coding effort lives: https://github.com/afbagwell/igor2
+Online documentation: https://www.sandia.gov/igor/documentation/
+
+#### 1a. Online Documentation Site Map
+
+The published documentation is the closest thing this project has to a written
+behavioral specification, since `docs/engineering_docs/` is not yet populated. It is
+useful for checking documented behavior against actual behavior.
+
+All paths below are relative to `https://www.sandia.gov/igor/documentation/`.
+
+| Guide | Page | Path |
+|---|---|---|
+| Administration | Index | `administration-guide/` |
+| Administration | Operational Requirements | `administration-guide/operational-requirements/` |
+| Administration | Setup | `administration-guide/setup/` |
+| Administration | Concepts & Configuration Options | `administration-guide/concepts-configuration/` |
+| User | Index | `user-guide/` |
+| User | Getting Started | `user-guide/getting-started/` |
+| User | Reservations | `user-guide/reservations/` |
+| User | Reservation Management | `user-guide/reservation-management/` |
+| User | Distros | `user-guide/distros/` |
+| User | Profiles | `user-guide/profiles/` |
+| User | Groups | `user-guide/groups/` |
+| Igor-web | User Guide | `igor-web-user-guide/` |
+
+Also `https://www.sandia.gov/igor/` (home) and `https://www.sandia.gov/igor/download/`.
+
+**Read these pages on demand**, when a task actually touches that subject area. Do not
+bulk-read the whole set up front.
+
+**Fetched pages come back summarized, not verbatim.** Never quote this documentation as
+authoritative from a paraphrase. When an exact flag name, configuration key, default
+value, or wording is load-bearing, explicitly request verbatim extraction, and prefer
+confirming the behavior against the source code or a running DEVMODE instance.
+
+Be especially careful where a page states a constraint and a default in the same breath;
+a summary can blur them. For example `MinReserveTime` has an absolute floor of 10
+minutes (configurable minimum, typically only useful for testing) while the default when
+unset is 30 minutes — two different values, and only one of them is a limit.
+
+#### 1b. Project Documents
+
+| Document | Purpose |
+|---|---|
+| `docs/bug_tracking/bug_tracker.md` | Index, progress tracker and quick summary for defects found during code analysis. |
+| `docs/bug_tracking/BUG-XXX.md` | Full detail for one bug, one file per assigned number. |
+| `docs/engineering_docs/` | Architecture, requirements, and status documents governed by §9. Not yet populated. |
+
+**`docs/bug_tracking/`** records only **concrete, reproducible** defects — never
+hypothetical problems that require exotic or assumed circumstances. Before adding an
+entry, establish that user or administrator input can actually reach the code path, and
+prefer demonstrating the failure with a run or a test over reasoning from source alone.
+
+**Consult and update `bug_tracker.md` first.** It holds the summary table — ID, status,
+component, severity and one-line description, each row linking to its detail document —
+and it is the file to read for current state. It also defines the status values and the
+procedure for adding a bug.
+
+**Each bug gets its own `BUG-XXX.md`** in the same folder, numbered from the next free
+ID in the summary table. A detail document carries the location and cause, a
+reproduction, the impact, and — once resolved — the fixing commit and the test that
+covers it. Add the summary row and the detail document together; neither is complete
+alone.
+
+**Cross-reference related bugs in both directions.** Bugs are rarely independent, and a
+relationship recorded in only one place goes stale silently. Every relationship belongs
+in the tracker's Relationships table *and* in a Relationships section in each detail
+document involved. The tracker defines the vocabulary: **blocks / blocked by** for a hard
+dependency where one bug cannot be closed until another is fixed, **subsumes / part of**
+where one bug is a specific instance of a broader class, and **related to** where two
+bugs share a root cause but are isolated and can be fixed in either order. Say which bug
+must be fixed first and why — the blocking direction is not always the obvious one.
+
+Keep the tracker's table lean, since it is the at-a-glance view: order rows by the ID in
+the first column to match the summary table, list a symmetric relationship once under the
+lower ID, and omit a `part of` row that a `blocked by` row already implies. Detail that
+does not survive this pruning belongs in the detail documents, which carry the full
+relationship picture without restriction.
+
+When a finding looks alarming but proves unreachable, record it in `bug_tracker.md`'s
+**"Not tracked as bugs"** section together with the reason it was rejected, so that it is
+not investigated a second time. Rejected findings stay in the index and do not get a
+`BUG-XXX.md`.
+
+Update these documents in the same commit as the fix they describe, and bump the
+tracker's version and Revision History per the §9.4 authoring rules.
 
 ---
 
 ## 2. Architecture Reference
 
-This is a brownfield open-source coding project. Architecture documents as described elsewhere in this file do not yet exist in the source code repository. In the absense of such documents or specific details within them, the source code serves as the arhcitectural reference.
-
+This is a brownfield open-source coding project. Architecture documents as described elsewhere in this file do not yet exist in the source code repository. In the absence of such documents or specific details within them, the source code serves as the architectural reference.
 
 **Key architectural constraints:**
 
-- Igor server is designed to run in a Linux environment with command line support for invoking some outside tools. Windows is not supported.
-- Igor's server-client architecture communicates over HTTP API calls. 
+- Igor server is designed to run in a Linux environment with command line support for invoking other Linux command-line tools. Windows is not supported.
+- Igor's server-client architecture communicates over HTTP API calls.
+- Igor's CLI is completely stateless. Whenever a command is run it performs a complete operation and exits. It has no database.
 - The majority of persistent state lives in the igor-server database. At this time only SQLite is supported. Any in-memory-only state (e.g., the admin 'elevate' map) operates like a cache that does not need to survive restarts or power loss.
 - Any architecture documents are authoritative. Do not violate component boundaries, skip abstraction interfaces, or introduce new infrastructure dependencies without explicit design discussion.
 
 #### 2a. Minimum software versions required to build Igor
 
 - Go 1.24.x
-- NodeJS v22.x
-- NPM v10.x
+- NodeJS 22.x
+- NPM 10.x
 - Vue.js (version 2)
 
 ---
@@ -44,7 +130,7 @@ This is a brownfield open-source coding project. Architecture documents as descr
 - **Formatter:** goimports
 - **Linting:** golangci-lint
 
-### Vue.js (version 2) / JavaScript
+### Vue.js / JavaScript
 - **Linting:** ESLint strict configuration + eslint-plugin-vue
 - **Formatting:** Prettier
 
@@ -59,7 +145,7 @@ This is a brownfield open-source coding project. Architecture documents as descr
 ## 4. Security Standards
 
 - **No hardcoded secrets.** No API keys, passwords, tokens, or private keys in source code. The only exception is defaults used in initial setup.
-- **Secret handling:** Never log secrets (tokens, API keys, passwords, `encrypted_api_key`). Never return secrets in API responses.
+- **Secret handling:** Never log secrets (tokens, API keys, passwords, etc.). Never return secrets in API responses.
 - **Error responses:** Never expose raw exception messages to clients in production.
 
 ---
@@ -68,9 +154,9 @@ This is a brownfield open-source coding project. Architecture documents as descr
 
 - **Frequent commits.** Each commit is one logical, self-contained change that leaves the codebase passing.
 - **Conventional Commits format.** See section 3 for types and scopes.
-- **Never skip hooks.** Pre-commit hooks, if they exist, should be always run.
-- **Never force-push main.**
-- **Never commit:** config files with values that assume anything other than defaults on a newly deployed instance, secrets/keys, commented-out code, print statements directly to the console, build artifacts, or failing tests. Do not override development artifacts in the project folder that are excluded via the .gitignore file.
+- **Never skip hooks.** Pre-commit hooks, if they exist, should always be run.
+- **Never commit or force-push to main.**
+- **Never commit:** config files with values that assume anything other than defaults on a newly deployed instance, secrets/keys, commented-out code, print statements directly to the console, build artifacts, or failing tests. Do not override .gitignore to commit development artifacts in the project folder.
 - **All tests must pass** before committing.
 
 ---
@@ -84,13 +170,13 @@ This is a brownfield open-source coding project. Architecture documents as descr
 
 ## 7. What Claude Should Always Do
 
-- Read the any relevant section of (`docs/engineering_docs/architecture_design.md`) before implementing any new feature or modifying an existing one.
+- Read any relevant section of `docs/engineering_docs/architecture_design.md` before implementing any new feature or modifying an existing one.
 - Write tests alongside implementation -- never after. Tests and implementation in the same commit.
 - Commit frequently in small, logical units. Prefer five small commits over one large one.
 - Raise concerns explicitly before proceeding if a requested change conflicts with the architecture, a security requirement, or a documented constraint.
-- Keep any  as the ground truth for the data model. If a code change implies a schema change, write the Alembic migration in the same branch.
+- Keep the GORM model definitions as the ground truth for the data model. If a code change implies a schema change, write the `db-migrate` migration in the same branch.
 - Use structured logging as defined in the logger.go file. Printing to the console is only permitted for the CLI client.
-- Follow the typed exception hierarchy per service. Never raise bare `Exception` or `ValueError` from business logic.
+- Follow the typed error hierarchy per package. Never return a bare `errors.New` or `fmt.Errorf` from business logic where a typed error exists; wrap with `%w` so callers can use `errors.As`.
 
 ---
 
@@ -136,7 +222,7 @@ code never drift.
 
 ### 9.3 Process
 
-1. **Identify** which documents need updating (§14.1).
+1. **Identify** which documents need updating (§9.1).
 2. **Propose** a single **batched** set of edits before writing code:
    ```
    File: docs/engineering_docs/<file>.md
@@ -170,3 +256,4 @@ code, or code not reflected in the docs. Run ad hoc, not on a schedule.
 | Version | Date | Author | Change |
 |---|---|---|---|
 | 1.0 | 2026-07-29 | Allen Bagwell | Initial baseline from current checkout of version v2.3.2 |
+| 1.1 | 2026-07-30 | Claude | Added §1a online documentation site map and on-demand reading instruction; added §1b project documents describing the bug tracking layout; corrected typos and replaced Python-template leftovers in §5 and §7 with their Go/GORM equivalents |
