@@ -20,8 +20,8 @@ update it first, then open the individual document for the full account.
 | [BUG-003](BUG-003.md) | fixed (`594ee54`) | core, cli | medium | 40 non-constant format-string call sites; blocks `go test ./...` |
 | [BUG-004](BUG-004.md) | fixed (`267035c`) | core | medium | Reservation owned by a user with no email retries an undeliverable warning every minute forever |
 | [BUG-005](BUG-005.md) | fixed (`f5aa095`) | core | medium | `helpLink` (a URL) is used as an email recipient, so the account-removal alert never sends |
-| [BUG-006](BUG-006.md) | fixed (`PENDING`) | core | high | Removing a group owner executes a nil template and panics the server |
-| [BUG-007](BUG-007.md) | fixed (`PENDING`) | core | high | With `resNotifyOn: false`, every reservation start and expiry executes a nil template and panics the server |
+| [BUG-006](BUG-006.md) | fixed (`c3f2549`) | core | high | Removing a group owner executes a nil template and panics the server |
+| [BUG-007](BUG-007.md) | fixed (`c3f2549`) | core | high | With `resNotifyOn: false`, every reservation start and expiry executes a nil template and panics the server |
 
 ## Relationships
 
