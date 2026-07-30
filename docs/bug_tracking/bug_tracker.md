@@ -18,7 +18,7 @@ update it first, then open the individual document for the full account.
 | [BUG-001](BUG-001.md) | fixed (`0f23ca6`) | cli | medium | A `%` in the cluster MOTD corrupts `igor show` output for every user |
 | [BUG-002](BUG-002.md) | fixed (`3ea340e`) | core | low | A `%` in the `duration` query param yields a mangled stats error message |
 | [BUG-003](BUG-003.md) | fixed (`594ee54`) | core, cli | medium | 40 non-constant format-string call sites; blocks `go test ./...` |
-| [BUG-004](BUG-004.md) | fixed (`PENDING`) | core | medium | Reservation owned by a user with no email retries an undeliverable warning every minute forever |
+| [BUG-004](BUG-004.md) | fixed (`267035c`) | core | medium | Reservation owned by a user with no email retries an undeliverable warning every minute forever |
 | [BUG-005](BUG-005.md) | open | core | medium | `helpLink` (a URL) is used as an email recipient, so the account-removal alert never sends |
 | [BUG-006](BUG-006.md) | open | core | high | Removing a group owner executes a nil template and panics the server |
 
