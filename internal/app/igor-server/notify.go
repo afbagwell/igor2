@@ -353,12 +353,22 @@ func processAcctNotifyEvent(msg AcctNotifyEvent) error {
 		t = tMap[EmailPasswordReset]
 	case EmailAcctRemovedIssue:
 		subj = "auto-removal of igor account needs review"
-		admin, _, _ := getIgorAdminTx()
-		if len(admin.Email) != 0 {
-			addEmailToList(&toList, admin.Email)
-		} else {
-			addEmailToList(&toList, igor.Email.HelpLink)
+		admin, _, aErr := getIgorAdminTx()
+		if aErr != nil {
+			return aErr
 		}
+		// There is no configured fallback recipient for this alert. Email.HelpLink is a
+		// web address -- a FAQ or support page, rendered as an <a href> everywhere else --
+		// not a mailbox, so it cannot stand in for one. When igor-admin has no address the
+		// alert goes to the log instead, which is then the only surviving record that
+		// these resources need review.
+		if admin.Email == "" {
+			logger.Warn().Msgf("account '%s' was auto-removed and one or more of its groups, reservations "+
+				"and/or distros were re-assigned to %s, but no alert could be sent because %s has no email "+
+				"address configured - review the re-assigned resources manually", msg.User.Name, IgorAdmin, IgorAdmin)
+			return nil
+		}
+		addEmailToList(&toList, admin.Email)
 		t = tMap[EmailAcctRemovedIssue]
 	default:
 		err := fmt.Errorf("unrecognized notify type '%d' - aborting email send", msg.Type)

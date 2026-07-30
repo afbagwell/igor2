@@ -5,12 +5,75 @@
 package igorserver
 
 import (
+	"bytes"
 	"errors"
 	"html/template"
 	"testing"
 
+	zl "github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
+	glog "gorm.io/gorm/logger"
 )
+
+// newTestDbBackend points igor.IGormDb at a fresh, empty in-memory SQLite database
+// carrying the full schema, and restores the previous backend when the test ends. The
+// DSN names a shared-cache database rather than using ":memory:" so that every pooled
+// connection reaches the same one.
+func newTestDbBackend(t *testing.T) {
+	t.Helper()
+
+	dial := &sqlite.Dialector{
+		DriverName: "sqlite3_igor",
+		DSN:        "file:" + t.Name() + "?mode=memory&cache=shared",
+	}
+	db, err := gorm.Open(dial, &gorm.Config{Logger: glog.Discard})
+	require.NoError(t, err, "opening in-memory database")
+
+	require.NoError(t, db.AutoMigrate(&Permission{}, &User{}, &Group{}, &Host{}, &HostPolicy{},
+		&Cluster{}, &Reservation{}, &Kickstart{}, &Distro{}, &Profile{}, &DistroImage{},
+		&HistoryRecord{}, &MaintenanceRes{}), "migrating in-memory database")
+
+	prev := igor.IGormDb
+	igor.IGormDb = &GormBackend{Database: db}
+	t.Cleanup(func() { igor.IGormDb = prev })
+}
+
+// captureLog redirects the package logger into a buffer for the duration of the test.
+func captureLog(t *testing.T) *bytes.Buffer {
+	t.Helper()
+
+	buf := &bytes.Buffer{}
+	prev := logger
+	logger = zl.New(buf).Level(zl.TraceLevel)
+	t.Cleanup(func() { logger = prev })
+	return buf
+}
+
+// testEmailConfig points the mailer at a port nothing listens on, so any unintended send
+// fails fast rather than hanging, and restores the real settings afterwards.
+func testEmailConfig(t *testing.T) {
+	t.Helper()
+
+	prev := igor.Email
+	t.Cleanup(func() { igor.Email = prev })
+
+	igor.Email.SmtpServer = "127.0.0.1"
+	igor.Email.SmtpPort = 1
+	igor.Email.DefaultSuffix = "example.com"
+}
+
+// initTestTemplates builds tMap so that a test reaching sendEmail renders a real body
+// rather than dereferencing a nil template.
+func initTestTemplates(t *testing.T) {
+	t.Helper()
+
+	resNotifyOff := false
+	igor.Email.ResNotifyOn = &resNotifyOff
+	initNotify()
+}
 
 // dedupeEmailList runs its input through common.Set, which silently discards the empty
 // string and whitespace-only entries. A recipient list can therefore look populated to
@@ -32,9 +95,7 @@ func TestDedupeEmailListDropsUnusableAddresses(t *testing.T) {
 // "503 5.5.2 Need rcpt command" from the SMTP server.
 func TestSendEmailRejectsUnusableRecipients(t *testing.T) {
 
-	// point at a port nothing listens on so an unintended dial fails fast instead of hanging
-	igor.Email.SmtpServer = "127.0.0.1"
-	igor.Email.SmtpPort = 1
+	testEmailConfig(t)
 	tmpl := template.Must(template.New("test").Parse("test body"))
 
 	cases := []struct {
@@ -61,12 +122,65 @@ func TestSendEmailRejectsUnusableRecipients(t *testing.T) {
 // far as the dialer and fails there, which is the correct place to fail.
 func TestSendEmailAcceptsUsableRecipient(t *testing.T) {
 
-	igor.Email.SmtpServer = "127.0.0.1"
-	igor.Email.SmtpPort = 1
+	testEmailConfig(t)
 	tmpl := template.Must(template.New("test").Parse("test body"))
 
 	err := sendEmail(tmpl, "test subject", []string{""}, []string{"someone@example.com"}, nil, false, struct{}{})
 	var noRcpt *NoEmailRecipientError
 	assert.False(t, errors.As(err, &noRcpt),
 		"a usable Cc address should not trip the no-recipient guard, got %v", err)
+}
+
+// Email.HelpLink is a web address, not a mailbox -- every template renders it as an
+// <a href>. It used to be handed to gomail as the recipient of the auto-removal alert
+// whenever igor-admin had no address of its own, which is the default state since
+// igor-admin is seeded with Email: "". gomail rejects it and the alert is lost.
+func TestAcctRemovedIssueWarnsInsteadOfEmailingHelpLink(t *testing.T) {
+
+	newTestDbBackend(t)
+	testEmailConfig(t)
+	log := captureLog(t)
+	igor.Email.HelpLink = "https://wiki.example.com/igor"
+	initTestTemplates(t)
+
+	// igor-admin exactly as database.go seeds it
+	require.NoError(t, igor.IGormDb.GetDB().Create(&User{Name: IgorAdmin, Email: ""}).Error)
+
+	err := processAcctNotifyEvent(AcctNotifyEvent{
+		NotifyEvent: NotifyEvent{Type: EmailAcctRemovedIssue, Instance: "igor-test"},
+		User:        &User{Name: "departed", Email: "departed@example.com"},
+	})
+
+	// No send is attempted at all, so nothing dials. Were HelpLink still standing in as
+	// the recipient this would carry the dial failure -- and against a reachable server,
+	// gomail's "invalid address", since it connects before it parses addresses.
+	assert.NoError(t, err)
+
+	assert.Contains(t, log.String(), `"level":"warn"`, "the lost alert should be logged as a warning")
+	assert.Contains(t, log.String(), "departed", "the warning should name the removed account")
+	assert.Contains(t, log.String(), "no email address configured",
+		"the warning should say why the alert could not be sent")
+	assert.NotContains(t, log.String(), "wiki.example.com", "helpLink should play no part in this path")
+}
+
+// The warning path must not swallow the alert when igor-admin does have an address.
+func TestAcctRemovedIssueEmailsAdminWhenAddressIsSet(t *testing.T) {
+
+	newTestDbBackend(t)
+	testEmailConfig(t)
+	captureLog(t)
+
+	initTestTemplates(t)
+
+	require.NoError(t, igor.IGormDb.GetDB().Create(&User{Name: IgorAdmin, Email: "admin@example.com"}).Error)
+
+	err := processAcctNotifyEvent(AcctNotifyEvent{
+		NotifyEvent: NotifyEvent{Type: EmailAcctRemovedIssue, Instance: "igor-test"},
+		User:        &User{Name: "departed", Email: "departed@example.com"},
+	})
+
+	// reaching the dead port proves a send was attempted rather than skipped
+	assert.ErrorContains(t, err, "connect: connection refused")
+	var noRcpt *NoEmailRecipientError
+	assert.False(t, errors.As(err, &noRcpt), "a real admin address should not trip the recipient guard")
 }
