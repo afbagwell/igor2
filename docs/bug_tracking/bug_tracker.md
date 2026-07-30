@@ -1,6 +1,6 @@
 # Igor Bug Tracker
 
-**Version:** 1.7
+**Version:** 1.8
 
 Index and progress tracker for concrete, reproducible defects found during code
 analysis. Hypothetical or exotic-circumstance concerns are **not** recorded here.
@@ -20,7 +20,8 @@ update it first, then open the individual document for the full account.
 | [BUG-003](BUG-003.md) | fixed (`594ee54`) | core, cli | medium | 40 non-constant format-string call sites; blocks `go test ./...` |
 | [BUG-004](BUG-004.md) | fixed (`267035c`) | core | medium | Reservation owned by a user with no email retries an undeliverable warning every minute forever |
 | [BUG-005](BUG-005.md) | fixed (`f5aa095`) | core | medium | `helpLink` (a URL) is used as an email recipient, so the account-removal alert never sends |
-| [BUG-006](BUG-006.md) | open | core | high | Removing a group owner executes a nil template and panics the server |
+| [BUG-006](BUG-006.md) | fixed (`PENDING`) | core | high | Removing a group owner executes a nil template and panics the server |
+| [BUG-007](BUG-007.md) | fixed (`PENDING`) | core | high | With `resNotifyOn: false`, every reservation start and expiry executes a nil template and panics the server |
 
 ## Relationships
 
@@ -42,6 +43,7 @@ in each detail document — so that neither view can go stale on its own.
 | [BUG-001](BUG-001.md) | related to | [BUG-002](BUG-002.md) | Same root cause in different binaries; isolated, and fixed in separate commits. |
 | [BUG-003](BUG-003.md) | blocked by | [BUG-001](BUG-001.md), [BUG-002](BUG-002.md) | BUG-003 closes only when `go vet` is clean, which requires every one of its 40 sites — including the two owned by BUG-001 and BUG-002. |
 | [BUG-004](BUG-004.md) | related to | [BUG-005](BUG-005.md) | Both follow from `igor-admin` being seeded with no email, but fail differently — empty recipient list vs. unparseable address. Isolated; either order. |
+| [BUG-006](BUG-006.md) | related to | [BUG-007](BUG-007.md) | Same failure mechanism — a nil template reaching `Execute` — from different causes: never written vs. registered only on some configurations. Isolated; either order. |
 
 Rows are ordered by the ID in the first column, matching the summary table. A symmetric
 relationship is listed once, under the lower ID.
@@ -99,3 +101,4 @@ are not re-investigated.
 | 1.5 | 2026-07-30 | Claude | Ordered the Relationships table by ID to match the summary table, and dropped `part of` rows already implied by a `blocked by` row; containment detail remains in the detail documents |
 | 1.6 | 2026-07-30 | Claude | Added BUG-004 (fixed), and BUG-005 and BUG-006 (open) found while investigating it; recorded the BUG-004/BUG-005 relationship |
 | 1.7 | 2026-07-30 | Claude | BUG-005 marked fixed; corrected the claim in BUG-004 and BUG-005 that gomail rejects a bad address before connecting — `DialAndSend` dials first, then parses recipients |
+| 1.8 | 2026-07-30 | Claude | BUG-006 marked fixed; added BUG-007, a second nil-template server panic found while fixing it, and recorded the BUG-006/BUG-007 relationship |

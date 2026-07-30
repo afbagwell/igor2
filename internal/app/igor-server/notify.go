@@ -94,6 +94,13 @@ func initNotify() {
 		t, _ = t.Parse(SenderInfoTemplate)
 		tMap[EmailGroupAddOwner] = t
 
+		t = template.New("EmailGroupRmvOwner")
+		t.Funcs(tFuncs)
+		t = template.Must(t.Parse(BaseEmailTemplate))
+		t, _ = t.Parse(NotifyGroupOwnerRemoveTemplate)
+		t, _ = t.Parse(SenderInfoTemplate)
+		tMap[EmailGroupRmvOwner] = t
+
 		t = template.New("EmailGroupChangeName")
 		t.Funcs(tFuncs)
 		t = template.Must(t.Parse(BaseEmailTemplate))
@@ -136,37 +143,39 @@ func initNotify() {
 		setCommonInfo(t)
 		tMap[EmailResNewGroup] = t
 
-		// if reservation notification is turned on, load these
-		if *igor.Email.ResNotifyOn {
+		// The reservation-time templates are built unconditionally, even when
+		// Email.ResNotifyOn is off. Registration used to be conditional, which left these
+		// four entries absent while processResNotifyEvent still dispatched them, and a
+		// missing entry is a nil template that panics on Execute. Email.ResNotifyOn is
+		// honored in exactly one place now -- the dispatch guard in processResNotifyEvent
+		// -- so what is registered no longer depends on configuration.
+		t = template.New("EmailResExpire")
+		t.Funcs(tFuncs)
+		t = template.Must(t.Parse(BaseEmailTemplate))
+		t, _ = t.Parse(NotifyResExpireTemplate)
+		setCommonInfo(t)
+		tMap[EmailResExpire] = t
 
-			t = template.New("EmailResExpire")
-			t.Funcs(tFuncs)
-			t = template.Must(t.Parse(BaseEmailTemplate))
-			t, _ = t.Parse(NotifyResExpireTemplate)
-			setCommonInfo(t)
-			tMap[EmailResExpire] = t
+		t = template.New("EmailResWarn")
+		t.Funcs(tFuncs)
+		t = template.Must(t.Parse(BaseEmailTemplate))
+		t, _ = t.Parse(NotifyResWarnTemplate)
+		setCommonInfo(t)
+		tMap[EmailResWarn] = t
 
-			t = template.New("EmailResWarn")
-			t.Funcs(tFuncs)
-			t = template.Must(t.Parse(BaseEmailTemplate))
-			t, _ = t.Parse(NotifyResWarnTemplate)
-			setCommonInfo(t)
-			tMap[EmailResWarn] = t
+		t = template.New("EmailResStart")
+		t.Funcs(tFuncs)
+		t = template.Must(t.Parse(BaseEmailTemplate))
+		t, _ = t.Parse(NotifyResStartTemplate)
+		setCommonInfo(t)
+		tMap[EmailResStart] = t
 
-			t = template.New("EmailResStart")
-			t.Funcs(tFuncs)
-			t = template.Must(t.Parse(BaseEmailTemplate))
-			t, _ = t.Parse(NotifyResStartTemplate)
-			setCommonInfo(t)
-			tMap[EmailResStart] = t
-
-			t = template.New("EmailResFinalWarn")
-			t.Funcs(tFuncs)
-			t = template.Must(t.Parse(BaseEmailTemplate))
-			t, _ = t.Parse(NotifyResFinalWarnTemplate)
-			setCommonInfo(t)
-			tMap[EmailResFinalWarn] = t
-		}
+		t = template.New("EmailResFinalWarn")
+		t.Funcs(tFuncs)
+		t = template.Must(t.Parse(BaseEmailTemplate))
+		t, _ = t.Parse(NotifyResFinalWarnTemplate)
+		setCommonInfo(t)
+		tMap[EmailResFinalWarn] = t
 	}
 }
 
@@ -525,8 +534,10 @@ func makeResWarnNotifyEvent(nType int, next time.Duration, r *Reservation, c str
 
 func processResNotifyEvent(msg ResNotifyEvent) error {
 
-	// filter out reservation time emails of flag is turned off (extend, expire, time left...)
-	if !*igor.Email.ResNotifyOn && 1200 <= msg.Type && msg.Type < 1300 {
+	// filter out reservation time emails if the flag is turned off (start, extend, expire,
+	// time left...). These are the 1100 block; the range read 1200-1299 until now, which is
+	// the account block and never reaches this function, so the guard never fired.
+	if !*igor.Email.ResNotifyOn && EmailResStart <= msg.Type && msg.Type < EmailAcctCreated {
 		logger.Debug().Msg("reservation time emails are disabled (no email sent)")
 		return nil
 	}
@@ -655,6 +666,14 @@ func addEmailToList(mList *[]string, addr string) {
 }
 
 func sendEmail(t *template.Template, subject string, toList []string, ccList []string, bccList []string, isPriority bool, mInfo ...interface{}) error {
+
+	// A notify type with no entry in tMap arrives here as a nil template, and
+	// Template.Execute does not nil-check its receiver -- it panics, on the notification
+	// manager's goroutine, where nothing recovers it. Refusing to send costs one email;
+	// the alternative costs the server.
+	if t == nil {
+		return NewMissingEmailTemplateError(subject)
+	}
 
 	// Normalize before counting. dedupeEmailList discards empty and whitespace-only
 	// entries, so a list that looks populated here can still hold no usable address --
@@ -981,6 +1000,17 @@ const (
 <p>Greetings,</p>
 
 <p>You have been added as an owner of the group '{{.Group.Name}}'.
+
+{{block "sender-info" .}}{{end}}
+{{end}}
+`
+
+	NotifyGroupOwnerRemoveTemplate = `
+{{template "base" .}}
+{{define "mail-body"}}
+<p>Greetings,</p>
+
+<p>You have been removed from the owner list of the group '{{.Group.Name}}'.
 
 {{block "sender-info" .}}{{end}}
 {{end}}

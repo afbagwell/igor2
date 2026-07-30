@@ -107,6 +107,26 @@ func (e *NoEmailRecipientError) Error() string {
 	return fmt.Sprintf("no usable recipient address for outbound email, subject: %s", e.subject)
 }
 
+// MissingEmailTemplateError is returned when a notification type is dispatched but has
+// no template registered for it. Unlike NoEmailRecipientError this is a programming
+// error, not a configuration one -- nothing an operator can correct -- so it is reported
+// loudly rather than downgraded to a warning.
+type MissingEmailTemplateError struct {
+	subject string
+}
+
+// NewMissingEmailTemplateError is used when initNotify built no template for the notify
+// type being sent, leaving a nil entry that would panic on execution.
+func NewMissingEmailTemplateError(subject string) *MissingEmailTemplateError {
+	return &MissingEmailTemplateError{
+		subject: subject,
+	}
+}
+
+func (e *MissingEmailTemplateError) Error() string {
+	return fmt.Sprintf("no email template registered for this notification type, subject: %s", e.subject)
+}
+
 // FileAlreadyExistsError is invoked when attempting to save
 // a file to a path where a file of the same name already exists
 type FileAlreadyExistsError struct {
