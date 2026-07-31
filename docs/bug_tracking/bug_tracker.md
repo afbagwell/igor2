@@ -1,6 +1,6 @@
 # Igor Bug Tracker
 
-**Version:** 1.12
+**Version:** 1.13
 
 Index and progress tracker for concrete, reproducible defects found during code
 analysis. Hypothetical or exotic-circumstance concerns are **not** recorded here.
@@ -22,15 +22,15 @@ update it first, then open the individual document for the full account.
 | [BUG-005](BUG-005.md) | fixed (`f5aa095`) | core | medium | `helpLink` (a URL) is used as an email recipient, so the account-removal alert never sends |
 | [BUG-006](BUG-006.md) | fixed (`c3f2549`) | core | high | Removing a group owner executes a nil template and panics the server |
 | [BUG-007](BUG-007.md) | fixed (`c3f2549`) | core | high | With `resNotifyOn: false`, every reservation start and expiry executes a nil template and panics the server |
-| [BUG-008](BUG-008.md) | open | core | high | Arista VLAN RPC has no timeout; a silent switch blocks all writes server-wide indefinitely |
+| [BUG-008](BUG-008.md) | fixed (`934e720`) | core | high | Arista VLAN RPC has no timeout; a silent switch blocks all writes server-wide indefinitely |
 | [BUG-009](BUG-009.md) | open | core | high | Power commands pass timeout `0`, running unbounded while holding the global write mutex |
-| [BUG-010](BUG-010.md) | open | core | high | `handleCreateReservations` unlocks without `defer`, so a panic permanently leaks the global write mutex |
+| [BUG-010](BUG-010.md) | fixed (`05e94ed`) | core | high | `handleCreateReservations` unlocks without `defer`, so a panic permanently leaks the global write mutex |
 | [BUG-011](BUG-011.md) | open | core | high | `findBestSolution` panics on index out of range with two or more restricted host policies |
 | [BUG-012](BUG-012.md) | open | core | medium | Host delete/update blocks all writes on an unbuffered channel send to the probe manager |
-| [BUG-013](BUG-013.md) | open | core | medium | `Shutdown` has no timeout, so a wedged request makes restart require SIGKILL |
+| [BUG-013](BUG-013.md) | fixed (`528e6f0`) | core | medium | `Shutdown` has no timeout, so a wedged request makes restart require SIGKILL |
 | [BUG-014](BUG-014.md) | open | core | medium | `panicHandler` calls `logger.Panic()` and re-panics, so the 500 response is never written |
 | [BUG-015](BUG-015.md) | open | core | medium | `igor sync arista` panics on any switch error response via unchecked type assertions |
-| [BUG-016](BUG-016.md) | open | core | medium | An empty `networkPassword` mangles every Arista error message into unreadable output |
+| [BUG-016](BUG-016.md) | fixed (`934e720`) | core | medium | An empty `networkPassword` mangles every Arista error message into unreadable output |
 
 BUG-008 through BUG-014 were found together while investigating an intermittent production
 condition in which all database-writing commands hang while reads continue to work. They
@@ -172,3 +172,4 @@ are not re-investigated.
 | 1.10 | 2026-07-30 | Claude | Added BUG-008 through BUG-014 from the investigation into intermittent production write hangs, with their relationships; recorded the `resNotifyChan` lock inversion as not tracked, with the reachability analysis that rules it out for now |
 | 1.11 | 2026-07-31 | Allen Bagwell, Claude | BUG-008 updated with production measurements: one connection per Arista RPC with no reuse (+10 for 10 calls, +1 for a one-node install), ~60-minute switch-side reclamation, and the resulting rolling-window exposure model. Corrected the earlier reclamation reasoning, which assumed a ~75s keepalive and understated accumulation by roughly fifty-fold |
 | 1.12 | 2026-07-31 | Allen Bagwell, Claude | Added BUG-015 (`aristaVlan` unchecked type assertions) and BUG-016 (empty `networkPassword` mangles error text), both demonstrated; recorded the switch TLS limitation under "Not tracked as bugs" with its full account in the new [ISSUE-001](../ISSUE-001.md) |
+| 1.13 | 2026-07-31 | Allen Bagwell, Claude | BUG-008 and BUG-016 marked fixed in `934e720`, BUG-010 in `05e94ed`, BUG-013 in `528e6f0`; resolutions and covering tests recorded in each detail document |
