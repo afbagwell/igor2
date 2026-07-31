@@ -1,6 +1,6 @@
 # CLAUDE.md — Igor
 
-**Version:** 1.1
+**Version:** 1.2
 
 This file is auto-loaded by Claude Code in every conversation. Read it in full before writing, modifying, or reviewing any code. All work is held to the highest standard of correctness, security, documentation, and testability.
 
@@ -60,12 +60,29 @@ unset is 30 minutes — two different values, and only one of them is a limit.
 |---|---|
 | `docs/bug_tracking/bug_tracker.md` | Index, progress tracker and quick summary for defects found during code analysis. |
 | `docs/bug_tracking/BUG-XXX.md` | Full detail for one bug, one file per assigned number. |
+| `docs/ISSUE-nnn.md` | Full detail for one design limitation that is **not** a defect, one file per assigned number. |
 | `docs/engineering_docs/` | Architecture, requirements, and status documents governed by §9. Not yet populated. |
 
 **`docs/bug_tracking/`** records only **concrete, reproducible** defects — never
 hypothetical problems that require exotic or assumed circumstances. Before adding an
 entry, establish that user or administrator input can actually reach the code path, and
 prefer demonstrating the failure with a run or a test over reasoning from source alone.
+
+**`docs/ISSUE-nnn.md`** is for the case that fails that test for the *opposite* reason: the
+code does exactly what it was written to do, nothing malfunctions, and there is no failure
+to reproduce — but the behaviour it was written to do is itself the problem. A missing
+capability, a mandated posture a deployer cannot opt out of, a design choice whose
+consequences land on downstream sites rather than on this project's own instance. Filing
+such a thing as a bug would misrepresent it and dilute the tracker; leaving it unrecorded
+loses it entirely.
+
+Number these from the next free `ISSUE-nnn`, independently of the `BUG-XXX` sequence. An
+issue document states plainly why it is not a defect, describes the limitation and its
+ramifications, and sketches what a fix would have to cover — including any way in which a
+naive fix would make matters worse. It carries its own `## Revision History`. Record it in
+`bug_tracker.md`'s **"Not tracked as bugs"** section with a one-paragraph summary and a
+link, so the index remains the single place to look. Acting on one is a §9 decision, not a
+bug fix.
 
 **Consult and update `bug_tracker.md` first.** It holds the summary table — ID, status,
 component, severity and one-line description, each row linking to its detail document —
@@ -257,3 +274,4 @@ code, or code not reflected in the docs. Run ad hoc, not on a schedule.
 |---|---|---|---|
 | 1.0 | 2026-07-29 | Allen Bagwell | Initial baseline from current checkout of version v2.3.2 |
 | 1.1 | 2026-07-30 | Claude | Added §1a online documentation site map and on-demand reading instruction; added §1b project documents describing the bug tracking layout; corrected typos and replaced Python-template leftovers in §5 and §7 with their Go/GORM equivalents |
+| 1.2 | 2026-07-31 | Allen Bagwell, Claude | Added `docs/ISSUE-nnn.md` to the §1b project documents table, with authoring rules distinguishing a design limitation from a defect and requiring it be indexed under the tracker's "Not tracked as bugs" section |

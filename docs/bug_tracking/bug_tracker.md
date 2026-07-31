@@ -1,6 +1,6 @@
 # Igor Bug Tracker
 
-**Version:** 1.11
+**Version:** 1.12
 
 Index and progress tracker for concrete, reproducible defects found during code
 analysis. Hypothetical or exotic-circumstance concerns are **not** recorded here.
@@ -29,6 +29,8 @@ update it first, then open the individual document for the full account.
 | [BUG-012](BUG-012.md) | open | core | medium | Host delete/update blocks all writes on an unbuffered channel send to the probe manager |
 | [BUG-013](BUG-013.md) | open | core | medium | `Shutdown` has no timeout, so a wedged request makes restart require SIGKILL |
 | [BUG-014](BUG-014.md) | open | core | medium | `panicHandler` calls `logger.Panic()` and re-panics, so the 500 response is never written |
+| [BUG-015](BUG-015.md) | open | core | medium | `igor sync arista` panics on any switch error response via unchecked type assertions |
+| [BUG-016](BUG-016.md) | open | core | medium | An empty `networkPassword` mangles every Arista error message into unreadable output |
 
 BUG-008 through BUG-014 were found together while investigating an intermittent production
 condition in which all database-writing commands hang while reads continue to work. They
@@ -64,6 +66,8 @@ in each detail document — so that neither view can go stale on its own.
 | [BUG-009](BUG-009.md) | related to | [BUG-012](BUG-012.md) | BUG-012's stall duration is set by the probe sweep, governed by the same `DefaultRunner` timeout, retry and concurrency knobs as BUG-009. |
 | [BUG-010](BUG-010.md) | related to | [BUG-011](BUG-011.md) | BUG-011 is a demonstrated panic source inside the exact call BUG-010 leaves unguarded; together they turn one request into a permanent write outage. Composition, not containment. |
 | [BUG-010](BUG-010.md) | related to | [BUG-014](BUG-014.md) | Both concern the aftermath of a handler panic — BUG-014 suppresses the response and splits the diagnostics, BUG-010 leaks the mutex. Independent; either order. |
+| [BUG-014](BUG-014.md) | related to | [BUG-015](BUG-015.md) | BUG-014 turns the BUG-015 panic into a silent dropped connection instead of a 500 carrying the switch's error text. Fixing BUG-014 alone makes BUG-015 far less confusing without fixing it. |
+| [BUG-015](BUG-015.md) | related to | [BUG-016](BUG-016.md) | Both are error-handling defects in `network_arista.go` that surface only when the switch returns something other than success. Isolated; either order. |
 
 Rows are ordered by the ID in the first column, matching the summary table. A symmetric
 relationship is listed once, under the lower ID.
@@ -135,6 +139,22 @@ are not re-investigated.
   every minute for every affected reservation, which is exactly the kind of burst that
   could have filled the buffer. That is one reason this is recorded rather than dismissed.
 
+- **Igor cannot talk to a VLAN switch over TLS.** The scheme is hardcoded to `http://` at
+  `network_arista.go:77` and no configuration key selects it, so every deployment with
+  `vlan.network` set transmits switch configuration commands — and the
+  `vlan.networkPassword` credential — in cleartext, with no supported way to opt out.
+
+  Not tracked as a bug because it is not a defect: the code does what it was written to do
+  and nothing malfunctions. It is a missing capability, and one whose consequences fall on
+  downstream deployments rather than on this project's own instance. Recording it here
+  would understate it, so it has its own document: **[ISSUE-001](../ISSUE-001.md)**, which
+  covers the exposure for sites that set a password and for sites that do not, and — most
+  importantly — why a naive fix is worse than the status quo. The transport already carries
+  `InsecureSkipVerify: true` as dead code, so merely emitting `https://` would ship TLS that
+  encrypts without authenticating while looking secure to both deployer and auditor.
+
+  Any work here needs the §9 treatment, not a bug fix.
+
 ## Revision History
 
 | Version | Date | Author | Change |
@@ -151,3 +171,4 @@ are not re-investigated.
 | 1.9 | 2026-07-30 | Allen Bagwell, Claude | Recorded live production verification of BUG-004 (cause and retry loop both confirmed; delivered mail was `EmailResWarn`) and of BUG-005's preconditions, whose failure remains unobserved |
 | 1.10 | 2026-07-30 | Claude | Added BUG-008 through BUG-014 from the investigation into intermittent production write hangs, with their relationships; recorded the `resNotifyChan` lock inversion as not tracked, with the reachability analysis that rules it out for now |
 | 1.11 | 2026-07-31 | Allen Bagwell, Claude | BUG-008 updated with production measurements: one connection per Arista RPC with no reuse (+10 for 10 calls, +1 for a one-node install), ~60-minute switch-side reclamation, and the resulting rolling-window exposure model. Corrected the earlier reclamation reasoning, which assumed a ~75s keepalive and understated accumulation by roughly fifty-fold |
+| 1.12 | 2026-07-31 | Allen Bagwell, Claude | Added BUG-015 (`aristaVlan` unchecked type assertions) and BUG-016 (empty `networkPassword` mangles error text), both demonstrated; recorded the switch TLS limitation under "Not tracked as bugs" with its full account in the new [ISSUE-001](../ISSUE-001.md) |
