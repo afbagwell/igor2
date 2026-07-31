@@ -1,6 +1,6 @@
 # Igor Bug Tracker
 
-**Version:** 1.10
+**Version:** 1.11
 
 Index and progress tracker for concrete, reproducible defects found during code
 analysis. Hypothetical or exotic-circumstance concerns are **not** recorded here.
@@ -150,3 +150,4 @@ are not re-investigated.
 | 1.8 | 2026-07-30 | Claude | BUG-006 marked fixed; added BUG-007, a second nil-template server panic found while fixing it, and recorded the BUG-006/BUG-007 relationship |
 | 1.9 | 2026-07-30 | Allen Bagwell, Claude | Recorded live production verification of BUG-004 (cause and retry loop both confirmed; delivered mail was `EmailResWarn`) and of BUG-005's preconditions, whose failure remains unobserved |
 | 1.10 | 2026-07-30 | Claude | Added BUG-008 through BUG-014 from the investigation into intermittent production write hangs, with their relationships; recorded the `resNotifyChan` lock inversion as not tracked, with the reachability analysis that rules it out for now |
+| 1.11 | 2026-07-31 | Allen Bagwell, Claude | BUG-008 updated with production measurements: one connection per Arista RPC with no reuse (+10 for 10 calls, +1 for a one-node install), ~60-minute switch-side reclamation, and the resulting rolling-window exposure model. Corrected the earlier reclamation reasoning, which assumed a ~75s keepalive and understated accumulation by roughly fifty-fold |
