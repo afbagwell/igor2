@@ -249,11 +249,12 @@ func fillKernelInfoBacklog() {
 		image.KernelInfo = kernelInfo
 		image.Breed = breed
 
-		dbAccess.Lock()
-		saveErr := performDbTx(func(tx *gorm.DB) error {
-			return tx.Save(&image).Error
+		var saveErr error
+		lockedDbWrite(func() {
+			saveErr = performDbTx(func(tx *gorm.DB) error {
+				return tx.Save(&image).Error
+			})
 		})
-		dbAccess.Unlock()
 
 		if saveErr != nil {
 			logger.Error().Msgf("failed to update kernel_info for image %s: %v", image.ImageID, saveErr)
@@ -379,15 +380,15 @@ func ldapSyncManager() {
 				logger.Warn().Msgf("%v", adErr)
 				continue
 			}
-			dbAccess.Lock()
-			logger.Debug().Msgf("doing LDAP sync management - %v", checkTime.Format(time.RFC3339))
-			if igor.Auth.Ldap.Sync.EnableUserSync {
-				executeLdapUserSync()
-			}
-			if igor.Auth.Ldap.Sync.EnableGroupSync {
-				executeLdapGroupSync()
-			}
-			dbAccess.Unlock()
+			lockedDbWrite(func() {
+				logger.Debug().Msgf("doing LDAP sync management - %v", checkTime.Format(time.RFC3339))
+				if igor.Auth.Ldap.Sync.EnableUserSync {
+					executeLdapUserSync()
+				}
+				if igor.Auth.Ldap.Sync.EnableGroupSync {
+					executeLdapGroupSync()
+				}
+			})
 			countdown.reset()
 		}
 	}

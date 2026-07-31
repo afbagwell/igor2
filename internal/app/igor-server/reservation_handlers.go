@@ -26,15 +26,26 @@ type JSONMessage struct {
 
 func handleCreateReservations(w http.ResponseWriter, r *http.Request) {
 
-	dbAccess.Lock()
 	createParams := getBodyFromContext(r)
 	clog := hlog.FromRequest(r)
 	actionPrefix := "create reservation"
 	clog.Debug().Msgf("handling %s request", actionPrefix)
 	rb := common.NewResponseBody()
 
-	res, resIsNow, status, err := doCreateReservation(createParams, r)
-	dbAccess.Unlock()
+	// The locked region ends before manageReservations below, which takes dbAccess itself.
+	// sync.Mutex is not reentrant, so a plain 'defer dbAccess.Unlock()' at the top of this
+	// handler is not a valid substitute -- it would self-deadlock on every immediate-start
+	// reservation. lockedDbWrite gets the deferred release that survives a panic in
+	// doCreateReservation, which previously leaked the mutex permanently.
+	var (
+		res      *Reservation
+		resIsNow bool
+		status   int
+		err      error
+	)
+	lockedDbWrite(func() {
+		res, resIsNow, status, err = doCreateReservation(createParams, r)
+	})
 
 	if err == nil && resIsNow {
 		now := time.Now()
