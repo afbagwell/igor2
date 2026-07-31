@@ -158,8 +158,15 @@ func runServer() {
 		logger.Info().Msgf("received OS signal: %v", s)
 		logger.Info().Msg("gracefully shutting down")
 
-		shutdownServer(apiSrv, "REST service")
-		shutdownServer(cbSrv, "node callback service")
+		// One budget for the whole sequence. Set before the first Shutdown call so that
+		// waitForWorkers, which reads it after shutdownChan closes, gets whatever is left
+		// rather than a fresh grace period of its own.
+		shutdownDeadline = time.Now().Add(shutdownGrace)
+		ctx, cancel := context.WithDeadline(context.Background(), shutdownDeadline)
+		defer cancel()
+
+		shutdownServer(ctx, apiSrv, "REST service")
+		shutdownServer(ctx, cbSrv, "node callback service")
 
 		close(shutdownChan) // shuts down reservationManager and notificationManager
 	}()
@@ -167,7 +174,7 @@ func runServer() {
 	startServer(apiSrv, "REST service", sigint, true)
 	startServer(cbSrv, "node callback service", sigint, *igor.Server.CbUseTLS)
 
-	waitForWorkers()
+	waitForWorkers(&wg, shutdownChan)
 
 	sqlDb, _ := igor.IGormDb.GetDB().DB()
 	_ = sqlDb.Close()
@@ -195,23 +202,28 @@ func startServer(srv *http.Server, name string, sigint chan os.Signal, useTLS bo
 	}()
 }
 
-// shutdownGrace bounds each stage of shutdown. http.Server.Shutdown waits for in-flight
+// shutdownGrace bounds the whole shutdown sequence -- both HTTP servers and the background
+// workers together, not each stage separately. http.Server.Shutdown waits for in-flight
 // requests to finish, and a request wedged on a stuck lock or an unbounded external call
-// never will -- given context.Background() it would wait forever, so systemd's stop timeout
-// was the only thing ending the process, by SIGKILL. That destroyed the evidence along with
-// the process. Bounded, we get to log what was still outstanding.
+// never will; given context.Background() it would wait forever, so systemd's stop timeout
+// was the only thing ending the process, by SIGKILL. That destroyed the goroutine state
+// along with the process. Bounded, we get to log what was still outstanding.
+//
 // A var rather than a const only so tests can shorten it; nothing at runtime reassigns it.
 var shutdownGrace = 20 * time.Second
 
-func shutdownServer(srv *http.Server, name string) {
-	ctx, cancel := context.WithTimeout(context.Background(), shutdownGrace)
-	defer cancel()
+// shutdownDeadline is written once, before shutdownChan is closed, so that every stage of
+// shutdown draws on one shared budget instead of each claiming a full shutdownGrace.
+// Reading it after receiving from shutdownChan is safe -- closing a channel establishes
+// happens-before with every receive.
+var shutdownDeadline time.Time
 
+func shutdownServer(ctx context.Context, srv *http.Server, name string) {
 	if err := srv.Shutdown(ctx); err != nil {
 		if errors.Is(err, context.DeadlineExceeded) {
-			logger.Error().Msgf("%s did not close within %v -- connections are still active, "+
-				"most likely a request blocked on the database write lock or an external call; "+
-				"forcing close", name, shutdownGrace)
+			logger.Error().Msgf("%s did not close within the %v shutdown grace -- connections are "+
+				"still active, most likely a request blocked on the database write lock or an "+
+				"external call; forcing close", name, shutdownGrace)
 			if closeErr := srv.Close(); closeErr != nil {
 				logger.Error().Msgf("error force-closing %s: %v", name, closeErr)
 			}
@@ -223,23 +235,55 @@ func shutdownServer(srv *http.Server, name string) {
 	}
 }
 
-// waitForWorkers blocks until every background manager has stopped, or until the grace
-// period expires. reservationManager and its siblings only observe shutdownChan between
-// ticks, so one parked on dbAccess never reaches its select. Without a bound here the
-// database session below is never closed and the process has to be killed.
-func waitForWorkers() {
+// waitForWorkers is the call that keeps runServer alive for the life of the process. It
+// blocks indefinitely while the server is running and only starts timing once shutdown has
+// actually been requested.
+//
+// That distinction is the whole point of the function. An earlier version simply bounded
+// the wait, which meant it also returned after the grace period on a perfectly healthy
+// server: runServer then fell through to closing the database and exiting, and systemd's
+// Restart=always turned that into a restart loop, once per grace period, forever.
+//
+// Once shutdown is under way the bound does matter. reservationManager and its siblings
+// only observe shutdownChan between ticks, so one parked on dbAccess never reaches its
+// select; without the bound the database session below is never closed and the process has
+// to be killed.
+// The WaitGroup and the shutdown channel are parameters rather than the package globals so
+// that tests can supply their own. Sharing them would mean one test's lingering wg.Wait()
+// racing the next test's wg.Add, which sync.WaitGroup does not permit.
+func waitForWorkers(workers *sync.WaitGroup, shutdownReq <-chan struct{}) {
+	grace := shutdownGrace
+
 	done := make(chan struct{})
 	go func() {
-		wg.Wait()
+		workers.Wait()
 		close(done)
 	}()
+
+	// No timer in this select, deliberately. Until a signal arrives there is nothing to
+	// wait out, and the HTTP servers are themselves tracked by the WaitGroup -- so on a
+	// running server neither case is ready and this blocks, which is what is wanted.
+	select {
+	case <-done:
+		// every worker exited without a shutdown ever being requested
+		return
+	case <-shutdownReq:
+	}
+
+	remaining := time.Until(shutdownDeadline)
+	if remaining <= 0 {
+		logger.Error().Msgf("the %v shutdown grace was already spent closing the HTTP services -- "+
+			"continuing without waiting on background workers", grace)
+		return
+	}
 
 	select {
 	case <-done:
 		logger.Info().Msg("all background workers stopped")
-	case <-time.After(shutdownGrace):
-		logger.Error().Msgf("background workers did not stop within %v -- continuing shutdown; "+
-			"a worker is most likely blocked on the database write lock", shutdownGrace)
+	case <-time.After(remaining):
+		logger.Error().Msgf("background workers did not stop within the %v shutdown grace -- "+
+			"continuing shutdown; a worker is most likely blocked on the database write lock",
+			grace)
 	}
 }
 
