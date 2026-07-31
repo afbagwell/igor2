@@ -6,12 +6,14 @@ package igorserver
 
 import (
 	"bytes"
+	"context"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"strings"
+	"sync"
 	"text/template"
 	"time"
 
@@ -46,6 +48,47 @@ type AristaConfig struct {
 	VLAN int
 }
 
+var (
+	aristaClientOnce sync.Once
+	aristaClient     *http.Client
+)
+
+// getAristaClient returns the process-wide client used for every eAPI call.
+//
+// A single Transport is built once and reused. Constructing one per call, as this code
+// previously did, defeats connection pooling entirely: aristaSet and aristaClear loop
+// once per host, so a 50-node reservation opened 50 separate sockets and then abandoned
+// each Transport with its connection still idle. Nothing on this side ever closed them --
+// a hand-built Transport leaves IdleConnTimeout at zero, meaning never expire, and the
+// readLoop goroutine keeps the Transport reachable -- so they lingered until the switch
+// timed them out, measured at roughly an hour on a production instance. Reuse turns that
+// whole reservation into one connection.
+//
+// The client also carries an overall Timeout. Without one, and with no request context,
+// a switch that completes the TCP handshake and then goes silent blocks Do forever. That
+// matters far more than it looks: the call is made while dbAccess is held and inside an
+// open GORM transaction, so a single stalled RPC stops every write on the server.
+// TLSHandshakeTimeout was the only bound present and never applied, since the scheme is
+// http and no handshake occurs.
+func getAristaClient() *http.Client {
+	aristaClientOnce.Do(func() {
+		aristaClient = &http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{
+					InsecureSkipVerify: true,
+				},
+				TLSHandshakeTimeout: time.Second * 5,
+				MaxIdleConns:        100,
+				MaxConnsPerHost:     100,
+				MaxIdleConnsPerHost: 100,
+				IdleConnTimeout:     90 * time.Second,
+			},
+			Timeout: time.Duration(igor.Vlan.NetworkTimeout) * time.Second,
+		}
+	})
+	return aristaClient
+}
+
 // Issue the given commands via the specified URL, username, and password.
 func aristaJSONRPC(user, password, URL string, commands []string) (map[string]interface{}, error) {
 	logger.Debug().Msgf("url for arista: %v", URL)
@@ -59,34 +102,27 @@ func aristaJSONRPC(user, password, URL string, commands []string) (map[string]in
 		return nil, fmt.Errorf("marshal: %v", err)
 	}
 
-	t := &http.Transport{
-		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: true,
-		},
-		TLSHandshakeTimeout: time.Second * 5,
-		MaxIdleConns:        100,
-		MaxConnsPerHost:     100,
-		MaxIdleConnsPerHost: 100,
-	}
+	client := getAristaClient()
 
-	client := &http.Client{
-		Transport: t,
-		//Timeout: time.Second * 30,
-	}
+	// The context duplicates the client's Timeout deliberately. Timeout alone cannot be
+	// narrowed by a caller, and this gives one to hang a per-batch cancel off later.
+	ctx, cancel := context.WithTimeout(context.Background(), client.Timeout)
+	defer cancel()
 
-	path := fmt.Sprintf("http://%s:%s@%s", user, password, URL)
-	req, err := http.NewRequest("POST", path, strings.NewReader(string(data)))
+	// Credentials go in a header rather than the URL. Embedded in the URL they end up in
+	// err.Error(), which is why this function used to scrub them out of its own error
+	// text -- and that scrub inserted its placeholder between every rune whenever the
+	// password was empty, which the shipped config explicitly permits.
+	path := fmt.Sprintf("http://%s", URL)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, path, strings.NewReader(string(data)))
 	if err != nil {
 		return nil, err
 	}
+	req.SetBasicAuth(user, password)
 	req.Header.Set(common.ContentType, common.MAppJson)
 	resp, err := client.Do(req)
-	// resp, err := http.Post(path, "application/json", strings.NewReader(string(data)))
 	if err != nil {
-		// replace the password with a placeholder so that it doesn't show up
-		// in error logs
-		msg := strings.Replace(err.Error(), password, "<PASSWORD>", -1)
-		return nil, fmt.Errorf("post failed: %v", msg)
+		return nil, fmt.Errorf("post failed: %v", err)
 	}
 	defer resp.Body.Close()
 

@@ -36,6 +36,7 @@ const (
 	DefaultMaxReserveTime      = 43200
 	LowestMinReserveTime       = 10
 	DefaultExtendWithin        = 4320
+	DefaultNetworkTimeout      = 30
 
 	//InsomniaPrefix             = "insomnia"
 )
@@ -167,6 +168,9 @@ type Config struct {
 
 		// NetworkURL: HTTP URL for sending API commands to the switch
 		NetworkURL string `yaml:"networkURL" json:"networkURL"`
+
+		// NetworkTimeout: seconds to wait for a switch API call before giving up
+		NetworkTimeout int `yaml:"networkTimeout" json:"networkTimeout"`
 
 		// VLAN segmentation options
 		// Min/Max: specify a range of VLANs to use
@@ -599,6 +603,13 @@ func initConfigCheck() {
 			}
 			if igor.Vlan.RangeMin == 0 || igor.Vlan.RangeMax == 0 || igor.Vlan.RangeMin > igor.Vlan.RangeMax {
 				exitPrintFatal(fmt.Sprintf("config error - vlan.rangeMin/Max is invalid [%d,%d]", igor.Vlan.RangeMin, igor.Vlan.RangeMax))
+			}
+			// A switch that accepts the connection and then goes silent would otherwise
+			// block a VLAN call forever while the global write mutex is held, so this
+			// timeout is not optional -- refuse to run without a positive value.
+			if igor.Vlan.NetworkTimeout <= 0 {
+				logger.Warn().Msgf("vlan.networkTimeout not specified, using default : %d seconds", DefaultNetworkTimeout)
+				igor.Vlan.NetworkTimeout = DefaultNetworkTimeout
 			}
 		}
 	} else {
