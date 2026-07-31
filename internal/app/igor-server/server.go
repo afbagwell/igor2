@@ -146,9 +146,10 @@ func runServer() {
 	initrdQueue.Start()
 	go initrdQueue.EnqueuePendingJobs()
 
-	// interrupt signal sent from terminal or systemd
+	// interrupt signal sent from terminal or systemd. SIGKILL is deliberately absent --
+	// it cannot be caught or handled, so registering it did nothing but mislead.
 	sigint := make(chan os.Signal, 1)
-	signal.Notify(sigint, syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL)
+	signal.Notify(sigint, syscall.SIGINT, syscall.SIGTERM)
 
 	go func() {
 
@@ -166,7 +167,7 @@ func runServer() {
 	startServer(apiSrv, "REST service", sigint, true)
 	startServer(cbSrv, "node callback service", sigint, *igor.Server.CbUseTLS)
 
-	wg.Wait()
+	waitForWorkers()
 
 	sqlDb, _ := igor.IGormDb.GetDB().DB()
 	_ = sqlDb.Close()
@@ -194,11 +195,51 @@ func startServer(srv *http.Server, name string, sigint chan os.Signal, useTLS bo
 	}()
 }
 
+// shutdownGrace bounds each stage of shutdown. http.Server.Shutdown waits for in-flight
+// requests to finish, and a request wedged on a stuck lock or an unbounded external call
+// never will -- given context.Background() it would wait forever, so systemd's stop timeout
+// was the only thing ending the process, by SIGKILL. That destroyed the evidence along with
+// the process. Bounded, we get to log what was still outstanding.
+// A var rather than a const only so tests can shorten it; nothing at runtime reassigns it.
+var shutdownGrace = 20 * time.Second
+
 func shutdownServer(srv *http.Server, name string) {
-	if err := srv.Shutdown(context.Background()); err != nil {
-		logger.Error().Msgf("error shutting down %s: %v", name, err)
+	ctx, cancel := context.WithTimeout(context.Background(), shutdownGrace)
+	defer cancel()
+
+	if err := srv.Shutdown(ctx); err != nil {
+		if errors.Is(err, context.DeadlineExceeded) {
+			logger.Error().Msgf("%s did not close within %v -- connections are still active, "+
+				"most likely a request blocked on the database write lock or an external call; "+
+				"forcing close", name, shutdownGrace)
+			if closeErr := srv.Close(); closeErr != nil {
+				logger.Error().Msgf("error force-closing %s: %v", name, closeErr)
+			}
+		} else {
+			logger.Error().Msgf("error shutting down %s: %v", name, err)
+		}
 	} else {
 		logger.Info().Msgf("%s closed", name)
+	}
+}
+
+// waitForWorkers blocks until every background manager has stopped, or until the grace
+// period expires. reservationManager and its siblings only observe shutdownChan between
+// ticks, so one parked on dbAccess never reaches its select. Without a bound here the
+// database session below is never closed and the process has to be killed.
+func waitForWorkers() {
+	done := make(chan struct{})
+	go func() {
+		wg.Wait()
+		close(done)
+	}()
+
+	select {
+	case <-done:
+		logger.Info().Msg("all background workers stopped")
+	case <-time.After(shutdownGrace):
+		logger.Error().Msgf("background workers did not stop within %v -- continuing shutdown; "+
+			"a worker is most likely blocked on the database write lock", shutdownGrace)
 	}
 }
 
