@@ -9,13 +9,14 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
-	"gorm.io/gorm"
 	"net/http"
 	"os"
 	"os/signal"
 	"sync"
 	"syscall"
 	"time"
+
+	"gorm.io/gorm"
 
 	"github.com/rs/cors"
 	//_ "net/http/pprof"
@@ -34,6 +35,12 @@ var (
 
 	// initrdQueue is used to queue and process initrd jobs
 	initrdQueue *InitrdJobQueue
+
+	// shutdownGrace bounds the whole shutdown sequence -- both HTTP servers and the background
+	// workers together, not each stage separately.
+	// A var rather than a const only so tests can shorten it; nothing at runtime reassigns it.
+	shutdownGrace    = 20 * time.Second
+	shutdownDeadline time.Time
 )
 
 // runServer sets up and runs the server processes. It blocks until shutdown.
@@ -201,22 +208,6 @@ func startServer(srv *http.Server, name string, sigint chan os.Signal, useTLS bo
 		wg.Done()
 	}()
 }
-
-// shutdownGrace bounds the whole shutdown sequence -- both HTTP servers and the background
-// workers together, not each stage separately. http.Server.Shutdown waits for in-flight
-// requests to finish, and a request wedged on a stuck lock or an unbounded external call
-// never will; given context.Background() it would wait forever, so systemd's stop timeout
-// was the only thing ending the process, by SIGKILL. That destroyed the goroutine state
-// along with the process. Bounded, we get to log what was still outstanding.
-//
-// A var rather than a const only so tests can shorten it; nothing at runtime reassigns it.
-var shutdownGrace = 20 * time.Second
-
-// shutdownDeadline is written once, before shutdownChan is closed, so that every stage of
-// shutdown draws on one shared budget instead of each claiming a full shutdownGrace.
-// Reading it after receiving from shutdownChan is safe -- closing a channel establishes
-// happens-before with every receive.
-var shutdownDeadline time.Time
 
 func shutdownServer(ctx context.Context, srv *http.Server, name string) {
 	if err := srv.Shutdown(ctx); err != nil {
