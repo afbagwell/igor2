@@ -113,9 +113,6 @@ func handleReadReservations(w http.ResponseWriter, r *http.Request) {
 
 func handleUpdateReservation(w http.ResponseWriter, r *http.Request) {
 
-	dbAccess.Lock()
-	defer dbAccess.Unlock()
-
 	editParams := getBodyFromContext(r)
 	clog := hlog.FromRequest(r)
 	actionPrefix := "update reservation"
@@ -124,7 +121,13 @@ func handleUpdateReservation(w http.ResponseWriter, r *http.Request) {
 	resName := ps.ByName("resName")
 	rb := common.NewResponseBody()
 
-	status, err := doUpdateReservation(resName, editParams, r)
+	var (
+		status int
+		err    error
+	)
+	lockedDbWrite(func() {
+		status, err = doUpdateReservation(resName, editParams, r)
+	})
 
 	if err != nil {
 		stdErrorResp(rb, status, actionPrefix, err, clog)
@@ -137,9 +140,6 @@ func handleUpdateReservation(w http.ResponseWriter, r *http.Request) {
 
 func handleDeleteReservations(w http.ResponseWriter, r *http.Request) {
 
-	dbAccess.Lock()
-	defer dbAccess.Unlock()
-
 	ps := httprouter.ParamsFromContext(r.Context())
 	resName := ps.ByName("resName")
 	clog := hlog.FromRequest(r)
@@ -147,7 +147,13 @@ func handleDeleteReservations(w http.ResponseWriter, r *http.Request) {
 	clog.Debug().Msgf("handling %s request", actionPrefix)
 	rb := common.NewResponseBody()
 
-	status, err := doDeleteReservation(resName, r)
+	var (
+		status int
+		err    error
+	)
+	lockedDbWrite(func() {
+		status, err = doDeleteReservation(resName, r)
+	})
 
 	if err != nil {
 		stdErrorResp(rb, status, actionPrefix, err, clog)
