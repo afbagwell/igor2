@@ -157,18 +157,31 @@ func processImage(image *DistroImage, tempFiles []string, tx *gorm.DB) (*DistroI
 		return nil, err
 	}
 
-	dbAccess.Lock()
-	defer dbAccess.Unlock()
-	if err = dbCreateImage(image, tx); err != nil {
+	// The create, the initrd job hand-off and the staging cleanup stay in one locked region:
+	// enqueueInitrdJob publishes the row dbCreateImage just wrote, and the cleanup removes the
+	// files it was built from.
+	var (
+		created   *DistroImage
+		createErr error
+	)
+	lockedDbWrite(func() {
+		if err = dbCreateImage(image, tx); err != nil {
+			destroyStagedImages([]string{tempK, tempI})
+			createErr = err
+			return
+		}
+
+		enqueueInitrdJob(image)
+
+		// on success, destroy staged image files
 		destroyStagedImages([]string{tempK, tempI})
-		return nil, err
+		created = image
+	})
+
+	if createErr != nil {
+		return nil, createErr
 	}
-
-	enqueueInitrdJob(image)
-
-	// on success, destroy staged image files
-	destroyStagedImages([]string{tempK, tempI})
-	return image, nil
+	return created, nil
 }
 
 // checkFileExists checks if a file exists at the given path.

@@ -255,10 +255,12 @@ func doCreateDistro(r *http.Request) (distro *Distro, code int, err error) {
 			distro.Groups = []Group{*pug}
 		}
 
-		dbAccess.Lock()
-		defer dbAccess.Unlock()
 		// commit to DB
-		return dbCreateDistro(distro, tx) // uses default err code
+		var createErr error
+		lockedDbWrite(func() {
+			createErr = dbCreateDistro(distro, tx)
+		})
+		return createErr // uses default err code
 
 	}); err == nil {
 		code = http.StatusCreated

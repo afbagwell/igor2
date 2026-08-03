@@ -638,21 +638,23 @@ func processResNotifyEvent(msg ResNotifyEvent) error {
 			logger.Info().Msgf("res expire warning sent to members of reservation '%s'", msg.Res.Name)
 		}
 
-		dbAccess.Lock()
-		defer dbAccess.Unlock()
+		var updateErr error
+		lockedDbWrite(func() {
+			updateErr = performDbTx(func(tx *gorm.DB) error {
 
-		if err := performDbTx(func(tx *gorm.DB) error {
+				resList, rrErr := dbReadReservations(map[string]interface{}{"name": msg.Res.Name}, nil, tx)
+				if rrErr != nil {
+					return rrErr
+				}
+				res := &resList[0]
+				changes := map[string]interface{}{"NextNotify": msg.NextNotify}
+				return dbEditReservation(res, changes, tx)
 
-			resList, rrErr := dbReadReservations(map[string]interface{}{"name": msg.Res.Name}, nil, tx)
-			if rrErr != nil {
-				return rrErr
-			}
-			res := &resList[0]
-			changes := map[string]interface{}{"NextNotify": msg.NextNotify}
-			return dbEditReservation(res, changes, tx)
+			})
+		})
 
-		}); err != nil {
-			return err
+		if updateErr != nil {
+			return updateErr
 		}
 	}
 
