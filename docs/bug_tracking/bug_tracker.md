@@ -1,6 +1,6 @@
 # Igor Bug Tracker
 
-**Version:** 1.14
+**Version:** 1.15
 
 Index and progress tracker for concrete, reproducible defects found during code
 analysis. Hypothetical or exotic-circumstance concerns are **not** recorded here.
@@ -31,6 +31,7 @@ update it first, then open the individual document for the full account.
 | [BUG-014](BUG-014.md) | open | core | medium | `panicHandler` calls `logger.Panic()` and re-panics, so the 500 response is never written |
 | [BUG-015](BUG-015.md) | open | core | medium | `igor sync arista` panics on any switch error response via unchecked type assertions |
 | [BUG-016](BUG-016.md) | fixed (`934e720`) | core | medium | An empty `networkPassword` mangles every Arista error message into unreadable output |
+| [BUG-017](BUG-017.md) | open | core | high | Image registration deadlocks against the initrd worker, wedging all writes permanently |
 
 BUG-008 through BUG-014 were found together while investigating an intermittent production
 condition in which all database-writing commands hang while reads continue to work. They
@@ -67,6 +68,8 @@ in each detail document — so that neither view can go stale on its own.
 | [BUG-010](BUG-010.md) | related to | [BUG-011](BUG-011.md) | BUG-011 is a demonstrated panic source inside the exact call BUG-010 leaves unguarded; together they turn one request into a permanent write outage. Composition, not containment. |
 | [BUG-010](BUG-010.md) | related to | [BUG-014](BUG-014.md) | Both concern the aftermath of a handler panic — BUG-014 suppresses the response and splits the diagnostics, BUG-010 leaks the mutex. Independent; either order. |
 | [BUG-014](BUG-014.md) | related to | [BUG-015](BUG-015.md) | BUG-014 turns the BUG-015 panic into a silent dropped connection instead of a 500 carrying the switch's error text. Fixing BUG-014 alone makes BUG-015 far less confusing without fixing it. |
+| [BUG-012](BUG-012.md) | related to | [BUG-017](BUG-017.md) | Same shape: a channel send made while holding `dbAccess`. BUG-012 stalls for a bounded probe sweep; BUG-017 never clears, because its receiver waits on the very mutex the sender holds. Isolated; either order. |
+| [BUG-013](BUG-013.md) | related to | [BUG-017](BUG-017.md) | BUG-013 is why the BUG-017 wedge cannot be cleared by a normal restart. |
 | [BUG-015](BUG-015.md) | related to | [BUG-016](BUG-016.md) | Both are error-handling defects in `network_arista.go` that surface only when the switch returns something other than success. Isolated; either order. |
 
 Rows are ordered by the ID in the first column, matching the summary table. A symmetric
@@ -139,6 +142,14 @@ are not re-investigated.
   every minute for every affected reservation, which is exactly the kind of burst that
   could have filled the buffer. That is one reason this is recorded rather than dismissed.
 
+  **Update 2026-08-03:** the identical inversion on a *different* channel is now tracked as
+  [BUG-017](BUG-017.md), and it is reachable. The distinction is only how the buffer fills:
+  `resNotifyChan` needs an implausible burst, whereas the initrd queue is filled **by
+  design** at startup by `EnqueuePendingJobs`, which pushes the entire unprocessed-image
+  backlog with no bound. This entry stays rejected on its own merits, but the two share a
+  root and should be fixed together — the rule wanted here is "never send on a channel while
+  holding `dbAccess`", not two separate patches.
+
 - **Igor cannot talk to a VLAN switch over TLS.** The scheme is hardcoded to `http://` at
   `network_arista.go:77` and no configuration key selects it, so every deployment with
   `vlan.network` set transmits switch configuration commands — and the
@@ -174,3 +185,4 @@ are not re-investigated.
 | 1.12 | 2026-07-31 | Allen Bagwell, Claude | Added BUG-015 (`aristaVlan` unchecked type assertions) and BUG-016 (empty `networkPassword` mangles error text), both demonstrated; recorded the switch TLS limitation under "Not tracked as bugs" with its full account in the new [ISSUE-001](../ISSUE-001.md) |
 | 1.13 | 2026-07-31 | Allen Bagwell, Claude | BUG-008 and BUG-016 marked fixed in `934e720`, BUG-010 in `05e94ed`, BUG-013 in `528e6f0`; resolutions and covering tests recorded in each detail document |
 | 1.14 | 2026-07-31 | Allen Bagwell, Claude | Recorded the BUG-013 regression found on the testbed and its fix in `6034343`: the bounded wait also returned on a healthy server, exiting the process into a systemd restart loop |
+| 1.15 | 2026-08-03 | Allen Bagwell, Claude | Added BUG-017, a permanent write deadlock between image registration and the initrd worker, found while routing every `dbAccess` acquisition through `lockedDbWrite`; recorded its relationships to BUG-012 and BUG-013, and annotated the rejected `resNotifyChan` inversion, which is the same defect on a channel that cannot realistically fill |
