@@ -1,6 +1,6 @@
 # Igor Bug Tracker
 
-**Version:** 1.15
+**Version:** 1.16
 
 Index and progress tracker for concrete, reproducible defects found during code
 analysis. Hypothetical or exotic-circumstance concerns are **not** recorded here.
@@ -31,7 +31,7 @@ update it first, then open the individual document for the full account.
 | [BUG-014](BUG-014.md) | open | core | medium | `panicHandler` calls `logger.Panic()` and re-panics, so the 500 response is never written |
 | [BUG-015](BUG-015.md) | open | core | medium | `igor sync arista` panics on any switch error response via unchecked type assertions |
 | [BUG-016](BUG-016.md) | fixed (`934e720`) | core | medium | An empty `networkPassword` mangles every Arista error message into unreadable output |
-| [BUG-017](BUG-017.md) | open | core | high | Image registration deadlocks against the initrd worker, wedging all writes permanently |
+| [BUG-017](BUG-017.md) | fixed (`1ad2730`) | core | high | Image registration deadlocks against the initrd worker, wedging all writes permanently |
 
 BUG-008 through BUG-014 were found together while investigating an intermittent production
 condition in which all database-writing commands hang while reads continue to work. They
@@ -150,6 +150,15 @@ are not re-investigated.
   root and should be fixed together — the rule wanted here is "never send on a channel while
   holding `dbAccess`", not two separate patches.
 
+  **Update 2026-08-12:** BUG-017 is fixed in `1ad2730`; this one is not, and the rule above
+  was not adopted wholesale. `scheduling.go:325` and `:589` still send on `resNotifyChan`
+  with `dbAccess` held. The rejection reasoning is unchanged and still holds — the consumer
+  remains bounded by the 10s SMTP timeout — so this stays out of the tracker. But note that
+  the argument is now doing more work than it was: it is the *only* thing standing between
+  this code and the failure BUG-017 turned out to produce, and BUG-017's fix demonstrates
+  that moving a hand-off past the commit is a contained change. Worth doing on the next
+  occasion that file is open, rather than waiting for the buffer to be reduced.
+
 - **Igor cannot talk to a VLAN switch over TLS.** The scheme is hardcoded to `http://` at
   `network_arista.go:77` and no configuration key selects it, so every deployment with
   `vlan.network` set transmits switch configuration commands — and the
@@ -186,3 +195,4 @@ are not re-investigated.
 | 1.13 | 2026-07-31 | Allen Bagwell, Claude | BUG-008 and BUG-016 marked fixed in `934e720`, BUG-010 in `05e94ed`, BUG-013 in `528e6f0`; resolutions and covering tests recorded in each detail document |
 | 1.14 | 2026-07-31 | Allen Bagwell, Claude | Recorded the BUG-013 regression found on the testbed and its fix in `6034343`: the bounded wait also returned on a healthy server, exiting the process into a systemd restart loop |
 | 1.15 | 2026-08-03 | Allen Bagwell, Claude | Added BUG-017, a permanent write deadlock between image registration and the initrd worker, found while routing every `dbAccess` acquisition through `lockedDbWrite`; recorded its relationships to BUG-012 and BUG-013, and annotated the rejected `resNotifyChan` inversion, which is the same defect on a channel that cannot realistically fill |
+| 1.16 | 2026-08-12 | Allen Bagwell, Claude | BUG-017 marked fixed in `1ad2730`, with the resolution and its three covering tests recorded. Noted that the suggested fix as originally written was insufficient — ending the locked region early leaves the enqueue inside the transaction, trading the mutex deadlock for `SQLITE_BUSY`. Updated the `resNotifyChan` rejection to reflect that it remains unfixed and now rests solely on its bounded consumer |
