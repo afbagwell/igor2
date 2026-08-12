@@ -1,6 +1,6 @@
 # Igor Bug Tracker
 
-**Version:** 1.17
+**Version:** 1.18
 
 Index and progress tracker for concrete, reproducible defects found during code
 analysis. Hypothetical or exotic-circumstance concerns are **not** recorded here.
@@ -150,14 +150,38 @@ are not re-investigated.
   root and should be fixed together — the rule wanted here is "never send on a channel while
   holding `dbAccess`", not two separate patches.
 
-  **Update 2026-08-12:** BUG-017 is fixed in `1ad2730`; this one is not, and the rule above
-  was not adopted wholesale. `scheduling.go:325` and `:589` still send on `resNotifyChan`
-  with `dbAccess` held. The rejection reasoning is unchanged and still holds — the consumer
-  remains bounded by the 10s SMTP timeout — so this stays out of the tracker. But note that
-  the argument is now doing more work than it was: it is the *only* thing standing between
-  this code and the failure BUG-017 turned out to produce, and BUG-017's fix demonstrates
-  that moving a hand-off past the commit is a contained change. Worth doing on the next
-  occasion that file is open, rather than waiting for the buffer to be reduced.
+  **Update 2026-08-12 — fixed in `30b35f4`, and this entry was wrong twice over.** It was
+  fixed on request rather than because the rejection was overturned, but preparing the fix
+  showed the entry understated the problem in two ways that matter for how findings like it
+  are assessed in future.
+
+  *It was not two sites, it was ten.* The entry named `scheduling.go:325` and `:589`.
+  Every notification in the server was sent under `dbAccess`, because the handlers hold the
+  mutex across their whole `do*` call and the sends sit inside those functions:
+  `host_block.go`, `reservation_delete.go` and `reservation_update.go` on `resNotifyChan`;
+  `user_create.go`, `user_update.go` and `ldap.go` on `acctNotifyChan`; `group_create.go`
+  and `group_update.go` on `groupNotifyChan`. Only `sendExpirationWarnings` was safe, being
+  reached from the scheduler with no lock held.
+
+  *The three channels are not independent.* One goroutine serves all three
+  (`server.go`, the notify manager select loop), and it blocks on `dbAccess` inside
+  `processResNotifyEvent`. While stuck there it drains none of them, so a full account or
+  group channel wedges reservation notifications and vice versa. The "burst that outpaces
+  the consumer" the rejection required was therefore a burst across *any* of the three, not
+  100 events of one kind — a materially easier bar than the entry assumed. The bounded-SMTP
+  argument was still load-bearing and no reachable trigger was ever demonstrated, so the
+  original call was defensible; it was resting on a narrower base than it appeared to.
+
+  The lesson for this index: "the buffer cannot realistically fill" is only as good as the
+  inventory of what fills it. This entry counted two of ten producers and treated one
+  consumer as three.
+
+  Fixed by `notifyBuffer` (`notify.go`): events are collected during the locked region and
+  flushed after it ends. Covered by `TestNotifyBufferReleasesLockBeforeSending`, which parks
+  a consumer between its receive and its lock acquisition and asserts the producer's region
+  still ends, and `TestNotifyChannelSendsAreConfinedToFlush`, which confines direct sends to
+  `flush` and `sendExpirationWarnings`. Both were verified to fail against the old pattern.
+  A nesting check would have caught none of these, since almost all the sends were indirect.
 
 - **`allowImageUpload` does not gate `POST /images/register`.** The setting is checked in
   exactly one place, `distro_create.go:93`, on the path where a user attaches a KI pair to a
@@ -226,3 +250,4 @@ are not re-investigated.
 | 1.15 | 2026-08-03 | Allen Bagwell, Claude | Added BUG-017, a permanent write deadlock between image registration and the initrd worker, found while routing every `dbAccess` acquisition through `lockedDbWrite`; recorded its relationships to BUG-012 and BUG-013, and annotated the rejected `resNotifyChan` inversion, which is the same defect on a channel that cannot realistically fill |
 | 1.16 | 2026-08-12 | Allen Bagwell, Claude | BUG-017 marked fixed in `1ad2730`, with the resolution and its three covering tests recorded. Noted that the suggested fix as originally written was insufficient — ending the locked region early leaves the enqueue inside the transaction, trading the mutex deadlock for `SQLITE_BUSY`. Updated the `resNotifyChan` rejection to reflect that it remains unfixed and now rests solely on its bounded consumer |
 | 1.17 | 2026-08-12 | Allen Bagwell, Claude | Investigated and rejected the apparent `allowImageUpload` gap on `POST /images/register`: the endpoint is admin-only via `authzHandler`'s derived permission, not via its route chain, and code matches documented intent. Corrected BUG-017's reachability claim, which had called the trigger an ordinary user action on the strength of the route chain alone; the register path needs an elevated admin and the user path needs `allowImageUpload: true` |
+| 1.18 | 2026-08-12 | Allen Bagwell, Claude | `resNotifyChan` lock inversion fixed in `30b35f4` and its entry corrected. Preparing the fix showed the entry had counted two of ten inverted producers, and had treated the three notify channels as independent when one goroutine serves all of them — so the burst needed to fill "the" buffer was across any of the three, not 100 events of one kind. The bounded-SMTP argument still held and no trigger was demonstrated, so the original rejection was defensible, but narrower than it read |
