@@ -88,11 +88,14 @@ func validateDistroImageParams(handler http.Handler) http.Handler {
 		var validateErr error
 		clog := hlog.FromRequest(r)
 
+		// Deferred here, in the frame that parses, so it also runs when a downstream panic
+		// unwinds past net/http's own cleanup. See removeUploadTempFiles.
+		defer removeUploadTempFiles(r)
+
 		if r.Method == http.MethodPost || r.Method == http.MethodPut {
 			// should only need to parse form once
 			if validateErr = r.ParseMultipartForm(MaxMemory); validateErr != nil {
-				clog.Warn().Msgf("validateDistroImageParams - %v", validateErr)
-				createValidationErrMessage(validateErr, w)
+				respondUploadParseErr(w, clog, validateErr)
 				return
 			}
 			diParams := r.PostForm

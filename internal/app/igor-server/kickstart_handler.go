@@ -114,10 +114,14 @@ func validateKSParams(handler http.Handler) http.Handler {
 
 		var validateErr error
 		clog := hlog.FromRequest(r)
+
+		// Deferred here, in the frame that parses, so it also runs when a downstream panic
+		// unwinds past net/http's own cleanup. See removeUploadTempFiles.
+		defer removeUploadTempFiles(r)
+
 		// should only need to parse form once
 		if validateErr = r.ParseMultipartForm(MaxMemory); validateErr != nil {
-			clog.Warn().Msgf("validateKickstartParams - %v", validateErr)
-			createValidationErrMessage(validateErr, w)
+			respondUploadParseErr(w, clog, validateErr)
 			return
 		}
 
@@ -141,9 +145,7 @@ func validateKSParams(handler http.Handler) http.Handler {
 
 		if r.Method == http.MethodPatch {
 			if validateErr = r.ParseMultipartForm(MaxMemory); validateErr != nil {
-				clog.Warn().Msgf("validateKSParams - %v", validateErr)
-				createValidationErrMessage(validateErr, w)
-				handler.ServeHTTP(w, r)
+				respondUploadParseErr(w, clog, validateErr)
 				return
 			}
 			ksParams := r.PostForm
