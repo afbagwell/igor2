@@ -1,6 +1,6 @@
 # Igor Bug Tracker
 
-**Version:** 1.19
+**Version:** 1.20
 
 Index and progress tracker for concrete, reproducible defects found during code
 analysis. Hypothetical or exotic-circumstance concerns are **not** recorded here.
@@ -32,7 +32,7 @@ update it first, then open the individual document for the full account.
 | [BUG-015](BUG-015.md) | open | core | medium | `igor sync arista` panics on any switch error response via unchecked type assertions |
 | [BUG-016](BUG-016.md) | fixed (`934e720`) | core | medium | An empty `networkPassword` mangles every Arista error message into unreadable output |
 | [BUG-017](BUG-017.md) | fixed (`1ad2730`) | core | high | Image registration deadlocks against the initrd worker, wedging all writes permanently |
-| [BUG-018](BUG-018.md) | fixed (`16a4a0b`) | core | medium | Spooled upload files survive a panicking request until /tmp fills and no distro can be uploaded |
+| [BUG-018](BUG-018.md) | fixed (`16a4a0b`) | core | high | Every multipart upload strands its spooled file in /tmp until the disk fills and no distro can be created |
 
 BUG-008 through BUG-014 were found together while investigating an intermittent production
 condition in which all database-writing commands hang while reads continue to work. They
@@ -68,7 +68,7 @@ in each detail document — so that neither view can go stale on its own.
 | [BUG-009](BUG-009.md) | related to | [BUG-012](BUG-012.md) | BUG-012's stall duration is set by the probe sweep, governed by the same `DefaultRunner` timeout, retry and concurrency knobs as BUG-009. |
 | [BUG-010](BUG-010.md) | related to | [BUG-011](BUG-011.md) | BUG-011 is a demonstrated panic source inside the exact call BUG-010 leaves unguarded; together they turn one request into a permanent write outage. Composition, not containment. |
 | [BUG-010](BUG-010.md) | related to | [BUG-014](BUG-014.md) | Both concern the aftermath of a handler panic — BUG-014 suppresses the response and splits the diagnostics, BUG-010 leaks the mutex. Independent; either order. |
-| [BUG-014](BUG-014.md) | subsumes | [BUG-018](BUG-018.md) | BUG-014 is why a panic escapes `ServeHTTP` at all, which is the only way an upload's spooled temp files survive. Fixing BUG-014 would fix BUG-018 as a side effect; BUG-018's own fix does not depend on it. |
+| [BUG-014](BUG-014.md) | related to | [BUG-018](BUG-018.md) | Not a cause: BUG-018 leaks on every upload regardless of panics, because `net/http` cleans a request copy igor never parses. BUG-014 adds a secondary leak path, and is why the resulting failure reaches the operator as a dropped connection rather than a 500. Isolated; either order. |
 | [BUG-014](BUG-014.md) | related to | [BUG-015](BUG-015.md) | BUG-014 turns the BUG-015 panic into a silent dropped connection instead of a 500 carrying the switch's error text. Fixing BUG-014 alone makes BUG-015 far less confusing without fixing it. |
 | [BUG-012](BUG-012.md) | related to | [BUG-017](BUG-017.md) | Same shape: a channel send made while holding `dbAccess`. BUG-012 stalls for a bounded probe sweep; BUG-017 never clears, because its receiver waits on the very mutex the sender holds. Isolated; either order. |
 | [BUG-013](BUG-013.md) | related to | [BUG-017](BUG-017.md) | BUG-013 is why the BUG-017 wedge cannot be cleared by a normal restart. |
@@ -255,3 +255,4 @@ are not re-investigated.
 | 1.17 | 2026-08-12 | Allen Bagwell, Claude | Investigated and rejected the apparent `allowImageUpload` gap on `POST /images/register`: the endpoint is admin-only via `authzHandler`'s derived permission, not via its route chain, and code matches documented intent. Corrected BUG-017's reachability claim, which had called the trigger an ordinary user action on the strength of the route chain alone; the register path needs an elevated admin and the user path needs `allowImageUpload: true` |
 | 1.18 | 2026-08-12 | Allen Bagwell, Claude | `resNotifyChan` lock inversion fixed in `30b35f4` and its entry corrected. Preparing the fix showed the entry had counted two of ten inverted producers, and had treated the three notify channels as independent when one goroutine serves all of them — so the burst needed to fill "the" buffer was across any of the three, not 100 events of one kind. The bounded-SMTP argument still held and no trigger was demonstrated, so the original rejection was defensible, but narrower than it read |
 | 1.19 | 2026-08-12 | Allen Bagwell, Claude | Added BUG-018, reported from operations: multipart uploads spool to /tmp and survive a panicking request, filling the disk until no distro can be uploaded. Fixed in `16a4a0b`. Measurement showed the ordinary paths never leaked — net/http already cleans them — so the fix had to be a deferred cleanup in the parsing frame, and two further defects on the same path were corrected: three validators ran the handler after a validation failure (the nil-deref panic behind the reported "closed network connection"), and every parse failure was reported as a 400 with the raw error |
+| 1.20 | 2026-08-12 | Allen Bagwell, Claude | BUG-018 cause corrected and severity raised medium → high. It was filed as a panic-path leak caused by BUG-014, on a measurement that mounted the handler directly on the router — a shape igor never uses. Every route sits behind `hlog`, which hands the chain a request copy, so `net/http`'s cleanup (which checks the request *it* holds) never applied and every upload leaked. Production reported 30 files from ordinary uploads, which does not fit the panic explanation; re-measuring through the real chain confirmed it. The covering tests were rewritten to mount the same way, having passed against the bug until then. BUG-014 demoted from `subsumes` to `related to` |

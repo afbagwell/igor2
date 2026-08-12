@@ -20,6 +20,7 @@ import (
 	"testing"
 
 	"github.com/julienschmidt/httprouter"
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/hlog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -42,15 +43,22 @@ func uploadBody(t *testing.T, size int) (*bytes.Buffer, string) {
 
 // postUpload serves one multipart POST through a router carrying igor's real panicHandler,
 // with TMPDIR pointed at a scratch directory, and reports what is left behind in it.
+//
+// The handler is mounted behind hlog.NewHandler because that is how igor mounts every API
+// route: hlog is the first entry in hcDefaultChain and replaces the request with a context
+// copy. That copy is why net/http's own cleanup does not apply here -- it checks
+// MultipartForm on the request *it* holds, which never receives the parsed form. A test that
+// mounts the handler directly does not reproduce the server, and passes without the fix.
 func postUpload(t *testing.T, handler http.HandlerFunc, partSize int) (leftovers []string, resp *http.Response) {
 	t.Helper()
 
 	tmp := t.TempDir()
 	t.Setenv("TMPDIR", tmp)
 
+	chain := hlog.NewHandler(zerolog.Nop())(handler)
 	router := &httprouter.Router{PanicHandler: panicHandler}
 	router.Handle(http.MethodPost, "/upload", func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-		handler(w, r)
+		chain.ServeHTTP(w, r)
 	})
 	srv := httptest.NewServer(router)
 	defer srv.Close()
@@ -91,8 +99,12 @@ func TestUploadTempFilesRemovedWhenHandlerPanics(t *testing.T) {
 		"upload temp files leaked after a panic; removeUploadTempFiles must be deferred in the frame that parses")
 }
 
-// The ordinary paths were never the problem -- net/http already cleaned them up -- but the
-// cleanup must not break them, and calling RemoveAll twice must be harmless.
+// The main event: an ordinary, entirely successful upload must leave nothing behind.
+//
+// net/http does remove these files, but only for the request it holds itself, and igor never
+// parses that one -- hlog hands the chain a copy before any validator runs. So every upload
+// stranded a whole kernel or initrd, which is how a production /tmp reached 30 files and 99%
+// of 32GB with no panics involved at all.
 func TestUploadTempFilesRemovedOnNormalReturn(t *testing.T) {
 	captureLog(t)
 
