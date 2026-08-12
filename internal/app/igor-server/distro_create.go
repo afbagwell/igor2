@@ -28,6 +28,10 @@ func doCreateDistro(r *http.Request) (distro *Distro, code int, err error) {
 	user := getUserFromContext(r)
 	code = http.StatusInternalServerError // default status, overridden at end if no errors
 
+	// Set when this request registers a brand new image, so the initrd job can be handed off
+	// once the transaction below has committed rather than from inside it -- see registerImage.
+	var newImage *DistroImage
+
 	if err = performDbTx(func(tx *gorm.DB) error {
 
 		// verify distro name is unique
@@ -94,13 +98,17 @@ func doCreateDistro(r *http.Request) (distro *Distro, code int, err error) {
 				if kickstart != "" {
 					return fmt.Errorf("distro image intended for local install/boot must be registered as a seperate step")
 				}
-				image, status, err := registerImage(r, tx)
+				image, created, status, err := registerImage(r, tx)
 				if err != nil {
 					code = status
 					return err
 				}
 				if image != nil {
 					distro.DistroImage = *image
+					if created {
+						// Enqueued after this transaction commits, not here -- see registerImage.
+						newImage = image
+					}
 				} else {
 					return fmt.Errorf("received empty image object when registering image files") // uses default err code
 				}
@@ -264,6 +272,13 @@ func doCreateDistro(r *http.Request) (distro *Distro, code int, err error) {
 
 	}); err == nil {
 		code = http.StatusCreated
+	}
+
+	// Hand off outside the transaction. Enqueue blocks on a full queue and the worker that
+	// drains it needs both dbAccess and a transaction of its own, so doing this above would
+	// deadlock the server (BUG-017).
+	if err == nil && newImage != nil {
+		enqueueInitrdJob(newImage)
 	}
 	return
 }
