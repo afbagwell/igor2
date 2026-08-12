@@ -26,14 +26,16 @@ func handleCreateGroup(w http.ResponseWriter, r *http.Request) {
 	rb := common.NewResponseBody()
 
 	var (
-		group  *Group
-		status int
-		addMsg string
-		err    error
+		group   *Group
+		status  int
+		addMsg  string
+		err     error
+		notices notifyBuffer
 	)
 	lockedDbWrite(func() {
-		group, status, addMsg, err = doCreateGroup(createParams, r)
+		group, status, addMsg, err = doCreateGroup(createParams, r, &notices)
 	})
+	notices.flush()
 
 	if err != nil {
 		stdErrorResp(rb, status, actionPrefix, err, clog)
@@ -95,12 +97,14 @@ func handleUpdateGroup(w http.ResponseWriter, r *http.Request) {
 	rb := common.NewResponseBody()
 
 	var (
-		status int
-		err    error
+		status  int
+		err     error
+		notices notifyBuffer
 	)
 	lockedDbWrite(func() {
-		status, err = doUpdateGroup(name, editParams, r)
+		status, err = doUpdateGroup(name, editParams, r, &notices)
 	})
+	notices.flush()
 
 	if err != nil {
 		stdErrorResp(rb, status, actionPrefix, err, clog)

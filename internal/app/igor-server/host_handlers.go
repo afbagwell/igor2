@@ -389,10 +389,12 @@ func handleBlockHosts(w http.ResponseWriter, r *http.Request) {
 	if !block {
 		actionPrefix = "unblock host(s)"
 	}
+	var notices notifyBuffer
 	if err == nil {
 		lockedDbWrite(func() {
-			status, err = doUpdateBlockHosts(block, hostList, r)
+			status, err = doUpdateBlockHosts(block, hostList, r, &notices)
 		})
+		notices.flush()
 	}
 
 	rb := common.NewResponseBody()

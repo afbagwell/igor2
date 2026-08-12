@@ -35,10 +35,12 @@ func handleCreateUser(w http.ResponseWriter, r *http.Request) {
 			user     *User
 			ucStatus int
 			err      error
+			notices  notifyBuffer
 		)
 		lockedDbWrite(func() {
-			user, ucStatus, err = doCreateUser(createParams, r)
+			user, ucStatus, err = doCreateUser(createParams, r, &notices)
 		})
+		notices.flush()
 
 		if err != nil {
 			stdErrorResp(rb, ucStatus, actionPrefix, err, clog)
@@ -103,10 +105,12 @@ func handleUpdateUser(w http.ResponseWriter, r *http.Request) {
 		updateMsg string
 		status    int
 		err       error
+		notices   notifyBuffer
 	)
 	lockedDbWrite(func() {
-		updateMsg, status, err = doUpdateUser(username, editParams, r)
+		updateMsg, status, err = doUpdateUser(username, editParams, r, &notices)
 	})
+	notices.flush()
 
 	if err != nil {
 		stdErrorResp(rb, status, actionPrefix, err, clog)

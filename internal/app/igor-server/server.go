@@ -456,15 +456,17 @@ func ldapSyncManager() {
 				logger.Warn().Msgf("%v", adErr)
 				continue
 			}
+			var notices notifyBuffer
 			lockedDbWrite(func() {
 				logger.Debug().Msgf("doing LDAP sync management - %v", checkTime.Format(time.RFC3339))
 				if igor.Auth.Ldap.Sync.EnableUserSync {
-					executeLdapUserSync()
+					executeLdapUserSync(&notices)
 				}
 				if igor.Auth.Ldap.Sync.EnableGroupSync {
 					executeLdapGroupSync()
 				}
 			})
+			notices.flush()
 			countdown.reset()
 		}
 	}

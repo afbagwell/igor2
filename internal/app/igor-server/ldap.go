@@ -49,12 +49,14 @@ func syncPreCheck() error {
 	}
 }
 
-func executeLdapUserSync() {
+// executeLdapUserSync runs with dbAccess held. Notifications raised during the sync are
+// queued into notices rather than sent; the caller flushes once the locked region has ended.
+func executeLdapUserSync(notices *notifyBuffer) {
 	if conn, err := getLDAPConnection(); err != nil {
 		logger.Error().Msgf("%v", err)
 		return
 	} else {
-		if err = syncLdapUsers(conn); err != nil {
+		if err = syncLdapUsers(conn, notices); err != nil {
 			logger.Error().Msgf("%v", err)
 		}
 	}
@@ -370,7 +372,7 @@ func syncLdapGroups(conn *ldap.Conn, ldapGroupList []Group, igorUsers []User) (e
 	return
 }
 
-func syncLdapUsers(conn *ldap.Conn) error {
+func syncLdapUsers(conn *ldap.Conn, notices *notifyBuffer) error {
 	actionPrefix := "LDAP user account sync"
 	defer conn.Close()
 
@@ -428,7 +430,7 @@ func syncLdapUsers(conn *ldap.Conn) error {
 	slices.Sort(currIgorUserList)
 	if !slices.Equal(currLdapUserList, currIgorUserList) {
 		removedUsernames := usernameDiff(currLdapUserList, currIgorUserList)
-		_ = removeSyncedUsers(usersFromNames(igorUsers, removedUsernames))
+		_ = removeSyncedUsers(usersFromNames(igorUsers, removedUsernames), notices)
 	}
 
 	// filter out non-members so we can register them
@@ -483,7 +485,7 @@ func syncLdapUsers(conn *ldap.Conn) error {
 			}
 		}
 
-		if user, _, cuErr := doCreateUser(userInfo, nil); cuErr != nil {
+		if user, _, cuErr := doCreateUser(userInfo, nil, notices); cuErr != nil {
 			return fmt.Errorf("failed to create new user '%s' via LDAP sync manager: %v", member, cuErr)
 		} else {
 			logger.Info().Msgf("created new user '%s' via with LDAP sync manager", user.Name)
@@ -493,7 +495,7 @@ func syncLdapUsers(conn *ldap.Conn) error {
 	return nil
 }
 
-func removeSyncedUsers(users []User) (err error) {
+func removeSyncedUsers(users []User, notices *notifyBuffer) (err error) {
 
 	for _, u := range users {
 
@@ -561,10 +563,7 @@ func removeSyncedUsers(users []User) (err error) {
 			}
 
 			if sendEmailAlert {
-				acctRemovedIssueMsg := makeAcctNotifyEvent(EmailAcctRemovedIssue, &u)
-				if acctRemovedIssueMsg != nil {
-					acctNotifyChan <- *acctRemovedIssueMsg
-				}
+				notices.addAcct(makeAcctNotifyEvent(EmailAcctRemovedIssue, &u))
 			}
 
 			// *** All good! let's start deleting stuff ***

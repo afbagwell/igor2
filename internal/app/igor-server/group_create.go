@@ -11,7 +11,9 @@ import (
 	"gorm.io/gorm"
 )
 
-func doCreateGroup(groupParams map[string]interface{}, r *http.Request) (group *Group, status int, extraMsg string, err error) {
+// doCreateGroup runs with dbAccess held, so it queues the group-created notification into
+// notices rather than sending it; the caller flushes once the locked region has ended.
+func doCreateGroup(groupParams map[string]interface{}, r *http.Request, notices *notifyBuffer) (group *Group, status int, extraMsg string, err error) {
 
 	groupName := groupParams["name"].(string)
 	owner := getUserFromContext(r)
@@ -109,11 +111,7 @@ func doCreateGroup(groupParams map[string]interface{}, r *http.Request) (group *
 
 		// only send this email if the group has members other than the owner
 		if len(group.Members) > 1 {
-
-			groupCreatedMsg := makeGroupNotifyEvent(EmailGroupCreated, group, nil, "")
-			if groupCreatedMsg != nil {
-				groupNotifyChan <- *groupCreatedMsg
-			}
+			notices.addGroup(makeGroupNotifyEvent(EmailGroupCreated, group, nil, ""))
 		}
 	}
 

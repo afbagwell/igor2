@@ -122,12 +122,14 @@ func handleUpdateReservation(w http.ResponseWriter, r *http.Request) {
 	rb := common.NewResponseBody()
 
 	var (
-		status int
-		err    error
+		status  int
+		err     error
+		notices notifyBuffer
 	)
 	lockedDbWrite(func() {
-		status, err = doUpdateReservation(resName, editParams, r)
+		status, err = doUpdateReservation(resName, editParams, r, &notices)
 	})
+	notices.flush()
 
 	if err != nil {
 		stdErrorResp(rb, status, actionPrefix, err, clog)
@@ -148,12 +150,14 @@ func handleDeleteReservations(w http.ResponseWriter, r *http.Request) {
 	rb := common.NewResponseBody()
 
 	var (
-		status int
-		err    error
+		status  int
+		err     error
+		notices notifyBuffer
 	)
 	lockedDbWrite(func() {
-		status, err = doDeleteReservation(resName, r)
+		status, err = doDeleteReservation(resName, r, &notices)
 	})
+	notices.flush()
 
 	if err != nil {
 		stdErrorResp(rb, status, actionPrefix, err, clog)

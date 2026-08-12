@@ -283,6 +283,7 @@ func closeoutReservations(checkTime *time.Time) error {
 	// The entire sweep is one locked region. Releasing between the read and the per-reservation
 	// deletes would let a reservation be edited out from under the list this loop is walking.
 	var closeoutErr error
+	var notices notifyBuffer
 	lockedDbWrite(func() {
 
 		timeParams := map[string]time.Time{"to-end": *checkTime}
@@ -324,9 +325,7 @@ func closeoutReservations(checkTime *time.Time) error {
 
 				// notify user of expired reservation
 				logger.Info().Msgf("reservation '%s' expired at %s -- deleting", resClone.Name, resClone.End.Format(common.DateTimeLongFormat))
-				if expireEvent := makeResWarnNotifyEvent(EmailResExpire, 0, resClone, clusters[0].Name); expireEvent != nil {
-					resNotifyChan <- *expireEvent
-				}
+				notices.addRes(makeResWarnNotifyEvent(EmailResExpire, 0, resClone, clusters[0].Name))
 
 				// uninstall reservation vlan and tftp
 				if err = uninstallRes(resClone); err != nil {
@@ -340,6 +339,7 @@ func closeoutReservations(checkTime *time.Time) error {
 		}
 	})
 
+	notices.flush()
 	return closeoutErr
 }
 
@@ -509,6 +509,7 @@ func installReservations(checkTime *time.Time) error {
 	// The entire sweep is one locked region. Releasing between the read and the per-reservation
 	// installs would let a reservation be edited out from under the list this loop is walking.
 	var installErr error
+	var notices notifyBuffer
 	lockedDbWrite(func() {
 
 		// now look for any reservations that are starting around the check time
@@ -593,9 +594,7 @@ func installReservations(checkTime *time.Time) error {
 						return
 					}
 
-					if startEvent := makeResWarnNotifyEvent(EmailResStart, 0, r.DeepCopy(), clusters[0].Name); startEvent != nil {
-						resNotifyChan <- *startEvent
-					}
+					notices.addRes(makeResWarnNotifyEvent(EmailResStart, 0, r.DeepCopy(), clusters[0].Name))
 				}
 			}
 		} else {
@@ -603,6 +602,7 @@ func installReservations(checkTime *time.Time) error {
 		}
 	})
 
+	notices.flush()
 	return installErr
 }
 

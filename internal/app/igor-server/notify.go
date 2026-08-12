@@ -299,6 +299,64 @@ type NotifyEvent struct {
 	HelpLink string
 }
 
+// notifyBuffer collects notification events produced while dbAccess is held, so they can be
+// dispatched once it has been released.
+//
+// Sending directly from a locked region deadlocks the server. One goroutine serves all three
+// notify channels (`server.go`, the notifyManager select loop), and processResNotifyEvent
+// takes dbAccess to record NextNotify. A producer holding the mutex and blocking on a full
+// channel is therefore waiting on a consumer that cannot drain without the very lock the
+// producer holds, and neither side has a timeout. Because the consumer is shared, a full
+// account or group channel wedges reservation notifications too, and vice versa.
+//
+// Collect into one of these during the locked region and call flush afterwards. A zero value
+// is ready to use, and flushing an empty buffer is a no-op, so callers need not check.
+type notifyBuffer struct {
+	res   []ResNotifyEvent
+	acct  []AcctNotifyEvent
+	group []GroupNotifyEvent
+}
+
+// addRes queues a reservation event. A nil event is ignored, since the makeXNotifyEvent
+// constructors return nil when the email configuration disables that notification.
+func (nb *notifyBuffer) addRes(e *ResNotifyEvent) {
+	if e != nil {
+		nb.res = append(nb.res, *e)
+	}
+}
+
+// addAcct queues an account event, ignoring nil.
+func (nb *notifyBuffer) addAcct(e *AcctNotifyEvent) {
+	if e != nil {
+		nb.acct = append(nb.acct, *e)
+	}
+}
+
+// addGroup queues a group event, ignoring nil.
+func (nb *notifyBuffer) addGroup(e *GroupNotifyEvent) {
+	if e != nil {
+		nb.group = append(nb.group, *e)
+	}
+}
+
+// flush dispatches every queued event and empties the buffer.
+//
+// It must be called with dbAccess *not* held -- that is the entire point of the type. The
+// sends still block when a channel is full, which is correct backpressure now that the
+// caller holds no lock the consumer needs.
+func (nb *notifyBuffer) flush() {
+	for _, e := range nb.res {
+		resNotifyChan <- e
+	}
+	for _, e := range nb.acct {
+		acctNotifyChan <- e
+	}
+	for _, e := range nb.group {
+		groupNotifyChan <- e
+	}
+	nb.res, nb.acct, nb.group = nil, nil, nil
+}
+
 type AcctNotifyEvent struct {
 	NotifyEvent
 	IsLocal bool
