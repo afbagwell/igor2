@@ -1,6 +1,6 @@
 # Igor Bug Tracker
 
-**Version:** 1.20
+**Version:** 1.21
 
 Index and progress tracker for concrete, reproducible defects found during code
 analysis. Hypothetical or exotic-circumstance concerns are **not** recorded here.
@@ -28,7 +28,7 @@ update it first, then open the individual document for the full account.
 | [BUG-011](BUG-011.md) | open | core | high | `findBestSolution` panics on index out of range with two or more restricted host policies |
 | [BUG-012](BUG-012.md) | open | core | medium | Host delete/update blocks all writes on an unbuffered channel send to the probe manager |
 | [BUG-013](BUG-013.md) | fixed (`528e6f0`, `6034343`) | core | medium | `Shutdown` has no timeout, so a wedged request makes restart require SIGKILL |
-| [BUG-014](BUG-014.md) | open | core | medium | `panicHandler` calls `logger.Panic()` and re-panics, so the 500 response is never written |
+| [BUG-014](BUG-014.md) | fixed (`88a9471`) | core | medium | `panicHandler` calls `logger.Panic()` and re-panics, so the 500 response is never written |
 | [BUG-015](BUG-015.md) | open | core | medium | `igor sync arista` panics on any switch error response via unchecked type assertions |
 | [BUG-016](BUG-016.md) | fixed (`934e720`) | core | medium | An empty `networkPassword` mangles every Arista error message into unreadable output |
 | [BUG-017](BUG-017.md) | fixed (`1ad2730`) | core | high | Image registration deadlocks against the initrd worker, wedging all writes permanently |
@@ -256,3 +256,4 @@ are not re-investigated.
 | 1.18 | 2026-08-12 | Allen Bagwell, Claude | `resNotifyChan` lock inversion fixed in `30b35f4` and its entry corrected. Preparing the fix showed the entry had counted two of ten inverted producers, and had treated the three notify channels as independent when one goroutine serves all of them — so the burst needed to fill "the" buffer was across any of the three, not 100 events of one kind. The bounded-SMTP argument still held and no trigger was demonstrated, so the original rejection was defensible, but narrower than it read |
 | 1.19 | 2026-08-12 | Allen Bagwell, Claude | Added BUG-018, reported from operations: multipart uploads spool to /tmp and survive a panicking request, filling the disk until no distro can be uploaded. Fixed in `16a4a0b`. Measurement showed the ordinary paths never leaked — net/http already cleans them — so the fix had to be a deferred cleanup in the parsing frame, and two further defects on the same path were corrected: three validators ran the handler after a validation failure (the nil-deref panic behind the reported "closed network connection"), and every parse failure was reported as a 400 with the raw error |
 | 1.20 | 2026-08-12 | Allen Bagwell, Claude | BUG-018 cause corrected and severity raised medium → high. It was filed as a panic-path leak caused by BUG-014, on a measurement that mounted the handler directly on the router — a shape igor never uses. Every route sits behind `hlog`, which hands the chain a request copy, so `net/http`'s cleanup (which checks the request *it* holds) never applied and every upload leaked. Production reported 30 files from ordinary uploads, which does not fit the panic explanation; re-measuring through the real chain confirmed it. The covering tests were rewritten to mount the same way, having passed against the bug until then. BUG-014 demoted from `subsumes` to `related to` |
+| 1.21 | 2026-08-12 | Allen Bagwell, Claude | BUG-014 fixed in `88a9471` and reproduced end to end for the first time — the document had recorded the mechanism from the vendored source but never observed it. `logger.Error()` replaces `logger.Panic()`; the panic value is no longer echoed to the client (§4), a deliberate departure from the suggested resolution whose cost to administrators is recorded along with the request-id follow-up that would restore it; both `http.Server` instances now route `ErrorLog` into zerolog, closing the split that sent half of every panic record to the journal |
