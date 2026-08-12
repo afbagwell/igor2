@@ -1,6 +1,6 @@
 # Igor Bug Tracker
 
-**Version:** 1.16
+**Version:** 1.17
 
 Index and progress tracker for concrete, reproducible defects found during code
 analysis. Hypothetical or exotic-circumstance concerns are **not** recorded here.
@@ -159,6 +159,35 @@ are not re-investigated.
   that moving a hand-off past the commit is a contained change. Worth doing on the next
   occasion that file is open, rather than waiting for the buffer to be reduced.
 
+- **`allowImageUpload` does not gate `POST /images/register`.** The setting is checked in
+  exactly one place, `distro_create.go:93`, on the path where a user attaches a KI pair to a
+  distro-create request. The dedicated image-registration endpoint never consults it, and its
+  route chain (`routes.go:369-373`) adds only `hcDefaultChain`, `hcAuthChain` and parameter
+  validation — no admin middleware. That looks like a way to register an image with the
+  setting off, and then reference it by `imageRef` on the `distro_create.go:76-84` branch,
+  which has no gate either.
+
+  **Investigated 2026-08-12 and rejected: the endpoint is admin-only, just not by the route
+  chain.** `authzHandler` derives the required permission from the URL and method rather than
+  from the chain, so an absent admin middleware proves nothing. For `POST /images/register`
+  it builds `images:*:create` — wildcard in the middle because the route has no `:imageName`
+  segment, so `paramsHandler` puts no params in the context (`middleware.go:45`) and authz
+  takes its `ps == nil` branch. The permission every user gets through the `all` group is
+  `groups,reservations,distros,profiles:*:create` (`database.go:155-163`). `images` is
+  deliberately absent from that list, so a non-admin is refused; only the bare `*` held by an
+  elevated admin implies it. Confirmed by driving the real `Permission.Implies` against that
+  exact default: it implies `distros:*:create` and does not imply `images:*:create`.
+
+  So there is no bypass. A regular user cannot complete step one, and an elevated admin
+  registering an image is the documented intent, not an escalation: `igor-server.yaml:97-101`
+  describes `allowImageUpload` as governing whether *a user* may upload a KI pair, and says
+  that otherwise this is "something only a sysadmin could do". Code and documentation agree.
+
+  Recorded because the route registration genuinely reads as unguarded, and because that
+  misreading was made once already — it produced an incorrect reachability claim in
+  [BUG-017](BUG-017.md), since corrected. Anyone auditing route chains in this codebase
+  should check `authz.go` before concluding an endpoint is open.
+
 - **Igor cannot talk to a VLAN switch over TLS.** The scheme is hardcoded to `http://` at
   `network_arista.go:77` and no configuration key selects it, so every deployment with
   `vlan.network` set transmits switch configuration commands — and the
@@ -196,3 +225,4 @@ are not re-investigated.
 | 1.14 | 2026-07-31 | Allen Bagwell, Claude | Recorded the BUG-013 regression found on the testbed and its fix in `6034343`: the bounded wait also returned on a healthy server, exiting the process into a systemd restart loop |
 | 1.15 | 2026-08-03 | Allen Bagwell, Claude | Added BUG-017, a permanent write deadlock between image registration and the initrd worker, found while routing every `dbAccess` acquisition through `lockedDbWrite`; recorded its relationships to BUG-012 and BUG-013, and annotated the rejected `resNotifyChan` inversion, which is the same defect on a channel that cannot realistically fill |
 | 1.16 | 2026-08-12 | Allen Bagwell, Claude | BUG-017 marked fixed in `1ad2730`, with the resolution and its three covering tests recorded. Noted that the suggested fix as originally written was insufficient — ending the locked region early leaves the enqueue inside the transaction, trading the mutex deadlock for `SQLITE_BUSY`. Updated the `resNotifyChan` rejection to reflect that it remains unfixed and now rests solely on its bounded consumer |
+| 1.17 | 2026-08-12 | Allen Bagwell, Claude | Investigated and rejected the apparent `allowImageUpload` gap on `POST /images/register`: the endpoint is admin-only via `authzHandler`'s derived permission, not via its route chain, and code matches documented intent. Corrected BUG-017's reachability claim, which had called the trigger an ordinary user action on the strength of the route chain alone; the register path needs an elevated admin and the user path needs `allowImageUpload: true` |
