@@ -80,11 +80,26 @@ func isResourceNameMatch(value string) error {
 	}
 }
 
-// A very simple panic handler
+// panicHandler is registered as httprouter's PanicHandler. It records the panic and answers
+// the client with a 500.
+//
+// It must return normally. httprouter calls it from inside the deferred recover that caught
+// the original panic, and a panic raised there is not caught by that same recover -- it
+// escapes ServeHTTP, so net/http closes the connection without a response and skips its own
+// end-of-request work. This used to log through logger.Panic(), which is zerolog's panic
+// *level*: it writes the event and then calls panic() again, so the three lines below never
+// ran and every panicking request reached the caller as a dropped connection.
+//
+// Log at error level instead. It is the same severity in the log and it returns.
+//
+// The panic value stays out of the response. It is a raw runtime message -- "index out of
+// range [3] with length 2", a driver error, a path -- and §4 does not allow returning those.
+// It is written to the log in full, along with the request path and the stack, so an incident
+// is diagnosable from igor.log alone; correlate a user's report by time and path.
 func panicHandler(w http.ResponseWriter, r *http.Request, err interface{}) {
-	logger.Panic().Stack().Msgf("panic intercepted - %v: %v\n%v", r.URL.Path, err, string(debug.Stack()))
+	logger.Error().Msgf("panic intercepted - %v: %v\n%v", r.URL.Path, err, string(debug.Stack()))
 	rb := common.NewResponseBody()
-	rb.Message = fmt.Sprintf("server error; please notify admins : %v", err)
+	rb.Message = "server error; please notify admins"
 	makeJsonResponse(w, http.StatusInternalServerError, rb)
 }
 

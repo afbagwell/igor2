@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"log/syslog"
 	"net/http"
 	"net/url"
@@ -319,4 +320,30 @@ func (w *igorSyslogWriter) Emerg(m string) error {
 }
 func (w *igorSyslogWriter) Crit(m string) error {
 	return w.writer.Crit(m)
+}
+
+// zerologWriter adapts the io.Writer that a *log.Logger writes to, sending each line into
+// igor's zerolog logger at error level.
+type zerologWriter struct {
+	source string
+}
+
+func (z zerologWriter) Write(p []byte) (n int, err error) {
+	logger.Error().Msgf("%s - %s", z.source, strings.TrimRight(string(p), "\n"))
+	return len(p), nil
+}
+
+// newHttpErrorLog builds the *log.Logger to hand to http.Server.ErrorLog so that net/http's
+// own errors -- accept failures, TLS handshake errors, and the "panic serving" line raised
+// when a panic escapes a handler -- are written to igor.log rather than to stderr.
+//
+// Left unset, ErrorLog defaults to the standard library's logger on stderr, which under
+// systemd lands in the journal: a different place from every other igor log line, and the one
+// an operator is not reading. That is how the second half of a BUG-014 incident used to
+// disappear -- the igor-side panic record went to igor.log and net/http's account of the same
+// event went to the journal.
+//
+// The flags are cleared because zerolog supplies its own timestamp.
+func newHttpErrorLog(source string) *log.Logger {
+	return log.New(zerologWriter{source: source}, "", 0)
 }

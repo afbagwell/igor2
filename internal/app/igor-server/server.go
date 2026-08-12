@@ -127,6 +127,7 @@ func runServer() {
 		//IdleTimeout:  time.Minute,
 		Handler:   corsHandler,
 		TLSConfig: tlsConfig,
+		ErrorLog:  newHttpErrorLog("api server"),
 	}
 
 	cbRouter := newRouter()
@@ -137,7 +138,8 @@ func runServer() {
 		//ReadTimeout:  5 * time.Second,
 		//WriteTimeout: 15 * time.Second,
 		//IdleTimeout:  time.Minute,
-		Handler: cbRouter,
+		Handler:  cbRouter,
+		ErrorLog: newHttpErrorLog("callback server"),
 	}
 	// add TLS to cb server if configured
 	if *igor.Server.CbUseTLS {
